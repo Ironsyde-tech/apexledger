@@ -8,6 +8,7 @@ import { Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isRateLimited } from "@/lib/rateLimiter";
+import { Turnstile, useTurnstile } from "@/components/Turnstile";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -20,6 +21,7 @@ export default function Auth({ mode }: { mode: Mode }) {
   const [signupSent, setSignupSent] = useState(false);
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get("ref") ?? "";
+  const { isVerified, isEnabled, handleVerify, handleExpire } = useTurnstile();
 
   const titles = {
     login: { h: "Welcome back", s: "Sign in to continue your learning." },
@@ -36,6 +38,11 @@ export default function Auth({ mode }: { mode: Mode }) {
     const limitWindow = mode === "forgot" ? 5 * 60 * 1000 : 60 * 1000;
     if (isRateLimited(limitKey, limitMax, limitWindow)) {
       toast.error("Too many attempts. Please wait before trying again.");
+      return;
+    }
+
+    if (!isVerified) {
+      toast.error("Please complete the human verification.");
       return;
     }
 
@@ -141,7 +148,13 @@ export default function Auth({ mode }: { mode: Mode }) {
             </div>
           )}
 
-          <Button variant="gold" size="lg" className="w-full" type="submit" disabled={loading}>
+          {isEnabled && (
+            <div className="pt-1">
+              <Turnstile onVerify={handleVerify} onExpire={handleExpire} theme="dark" />
+            </div>
+          )}
+
+          <Button variant="gold" size="lg" className="w-full" type="submit" disabled={loading || !isVerified}>
             {loading ? "Please wait…" : mode === "login" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
           </Button>
         </form>

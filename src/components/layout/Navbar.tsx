@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Link, NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu, X, User, LogOut, LayoutDashboard, ShieldCheck,
-  Settings, BookOpen, ChevronDown, Sparkles,
+  Settings, BookOpen, ChevronDown, Sparkles, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { SearchTrigger } from "@/components/GlobalSearch";
 
 const links = [
   { to: "/", label: "Home" },
@@ -75,7 +76,8 @@ export const Navbar = () => {
         </nav>
 
         {/* Desktop right side */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-3">
+          <SearchTrigger />
           {loading ? (
             <div className="h-8 w-20 rounded-md bg-secondary/50 animate-pulse" />
           ) : user ? (

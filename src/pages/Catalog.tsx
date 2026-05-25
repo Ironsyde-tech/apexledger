@@ -38,7 +38,9 @@ export default function Catalog() {
           (cat === "All" || c.category === cat) &&
           (q === "" ||
             c.title.toLowerCase().includes(q.toLowerCase()) ||
-            (c.tagline ?? "").toLowerCase().includes(q.toLowerCase()))
+            (c.tagline ?? "").toLowerCase().includes(q.toLowerCase()) ||
+            (c.description ?? "").toLowerCase().includes(q.toLowerCase()) ||
+            (c.category ?? "").toLowerCase().includes(q.toLowerCase()))
       ),
     [q, level, cat, courses]
   );
@@ -57,7 +59,7 @@ export default function Catalog() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search courses…"
+            placeholder="Search courses, topics, categories… (⌘K)"
             className="pl-10 bg-secondary/40 border-border"
           />
         </div>
