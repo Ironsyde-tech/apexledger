@@ -11,7 +11,7 @@ export default function About() {
           A quiet academy <br />for a noisy world.
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed">
-          Prime Society was founded on a simple idea: that learning to navigate markets should feel less like a slot machine and more like a craft. We build courses with the patience of editors and the rigour of practitioners — so that what you learn here stays with you.
+          Apex Ledger was built on a simple idea: that learning to navigate markets should feel less like gambling and more like a craft. We write books with the patience of editors and the rigour of practitioners — so that what you learn here stays with you.
         </p>
       </section>
 
@@ -32,8 +32,8 @@ export default function About() {
       <section className="container py-24 max-w-3xl">
         <h2 className="font-display text-4xl mb-6">Our story</h2>
         <div className="space-y-5 text-muted-foreground leading-relaxed">
-          <p>Prime Society began as a small reading group between practitioners and friends. What started as evening discussions over markets, books, and craft eventually became a library — and then a school.</p>
-          <p>We chose the name Prime Society for what it represents: a small, considered circle committed to first principles, patience, and the long arc of mastery. The markets reward those who think clearly. We're here to help you do exactly that.</p>
+          <p>Apex Ledger began as a small reading group between practitioners and friends. What started as evening discussions over markets, books, and strategy eventually became a library — and then a platform.</p>
+          <p>We chose the name Apex Ledger for what it represents: reaching the peak through clear, recorded knowledge. The markets reward those who think clearly. We're here to help you do exactly that.</p>
         </div>
         <Button asChild variant="gold" size="lg" className="mt-10"><Link to="/courses">See our courses</Link></Button>
       </section>

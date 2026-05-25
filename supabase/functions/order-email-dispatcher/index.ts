@@ -20,13 +20,13 @@ function shell(title: string, bodyHtml: string) {
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #ece6d8;border-radius:8px;overflow:hidden;">
         <tr><td style="background:${NAVY};padding:24px 32px;">
-          <div style="color:${GOLD};font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:600;">Prime Society</div>
+          <div style="color:${GOLD};font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:600;">Apex Ledger</div>
         </td></tr>
         <tr><td style="padding:32px;">
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:20px 32px;border-top:1px solid #ece6d8;color:${MUTED};font-size:12px;line-height:1.6;">
-          Prime Society &middot; This is an automated message.<br/>
+          Apex Ledger &middot; This is an automated message.<br/>
           Need help? Reply to this email and our team will get back to you.
         </td></tr>
       </table>

@@ -21,7 +21,7 @@ export default function Auth({ mode }: { mode: Mode }) {
 
   const titles = {
     login: { h: "Welcome back", s: "Sign in to continue your learning." },
-    signup: { h: "Create your account", s: "Begin your journey with Prime Society." },
+    signup: { h: "Create your account", s: "Begin your journey with Apex Ledger." },
     forgot: { h: "Reset your password", s: "We'll send you a secure reset link." },
   };
 

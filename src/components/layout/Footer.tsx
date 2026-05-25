@@ -7,7 +7,7 @@ export const Footer = () => (
       <div className="md:col-span-2 space-y-4">
         <Logo />
         <p className="max-w-sm text-sm text-muted-foreground">
-          Prime Society is a premium learning house for traders, investors, and the curious. Built on craft, taught with care.
+          Apex Ledger is a premium knowledge hub for crypto traders, forex practitioners, and market enthusiasts. Expert-written, carefully curated.
         </p>
       </div>
       <div>
@@ -30,7 +30,7 @@ export const Footer = () => (
     </div>
     <div className="hairline" />
     <div className="container py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-      <p>© {new Date().getFullYear()} Prime Society. All rights reserved.</p>
+      <p>© {new Date().getFullYear()} Apex Ledger. All rights reserved.</p>
       <div className="flex gap-4">
         <Link to="/terms" className="hover:text-foreground">Terms</Link>
         <Link to="/privacy" className="hover:text-foreground">Privacy</Link>

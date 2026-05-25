@@ -52,14 +52,14 @@ export default function Home() {
 
         <div className="container py-28 md:py-40 max-w-4xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/40 backdrop-blur px-4 py-1.5 text-xs uppercase tracking-widest text-primary mb-8 animate-fade-up">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> A premium learning house
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Your edge in the markets
           </p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[1.05] mb-8 animate-fade-up" style={{ animationDelay: "0.1s" }}>
             Master the markets, <br />
             <span className="text-gradient-gold italic">elegantly.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            Prime Society is a quiet, deliberate place to learn the craft of trading, investing, and digital assets — from mentors who actually practice it.
+            Apex Ledger is where serious traders come to sharpen their edge — curated books on crypto, forex, and market strategy from practitioners who live it.
           </p>
           <div className="flex flex-wrap gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
             <Button asChild variant="gold" size="xl">
@@ -79,7 +79,7 @@ export default function Home() {
       {/* Value props */}
       <section className="container py-24">
         <div className="max-w-2xl mb-16">
-          <p className="text-xs uppercase tracking-widest text-primary mb-3">Why Prime Society</p>
+          <p className="text-xs uppercase tracking-widest text-primary mb-3">Why Apex Ledger</p>
           <h2 className="font-display text-4xl md:text-5xl">A different kind of online academy.</h2>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -14,7 +14,7 @@ export default function Terms() {
         <div className="gold-border rounded-xl p-6 space-y-4">
           <h2 className="font-display text-2xl text-foreground">1. Service Description</h2>
           <p>
-            Prime Society ("we", "us", "our") provides digital educational courses on trading,
+            Apex Ledger ("we", "us", "our") provides digital educational courses on trading,
             investing, and cryptocurrency. By creating an account or purchasing a course, you agree
             to these terms.
           </p>
@@ -43,7 +43,7 @@ export default function Terms() {
           <h2 className="font-display text-2xl text-foreground">4. Intellectual Property</h2>
           <p>
             All course content, including but not limited to videos, text, images, and resources,
-            is the property of Prime Society. You may not redistribute, copy, or share course
+            is the property of Apex Ledger. You may not redistribute, copy, or share course
             content without explicit written permission.
           </p>
         </div>
@@ -69,7 +69,7 @@ export default function Terms() {
         <div className="gold-border rounded-xl p-6 space-y-4">
           <h2 className="font-display text-2xl text-foreground">7. Limitation of Liability</h2>
           <p>
-            To the maximum extent permitted by law, Prime Society shall not be liable for any
+            To the maximum extent permitted by law, Apex Ledger shall not be liable for any
             indirect, incidental, or consequential damages arising from the use of our platform
             or course content.
           </p>
