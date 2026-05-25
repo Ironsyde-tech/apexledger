@@ -1,0 +1,13 @@
+-- =================================================
+-- Admin account setup (NEW PROJECT)
+-- =================================================
+-- Instead of hardcoding passwords in migrations, create your admin
+-- accounts through the app's signup page, then run this SQL in the
+-- Supabase SQL Editor to grant admin role:
+--
+--   INSERT INTO public.user_roles (user_id, role)
+--   SELECT id, 'admin' FROM auth.users WHERE email = 'your-admin@email.com'
+--   ON CONFLICT (user_id, role) DO NOTHING;
+--
+-- This migration is intentionally empty for security.
+-- Admin accounts should be created via the signup flow + manual role grant.

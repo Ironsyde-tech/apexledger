@@ -1,0 +1,1 @@
+revoke execute on function public.notify_order_email() from public, anon, authenticated;

@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prime Society — luxury academy design system. All colors HSL. */
+
+@layer base {
+  :root {
+    /* Core palette — dark navy first, light theme inverted for forms */
+    --background: 222 47% 6%;
+    --foreground: 40 30% 96%;
+
+    --card: 222 42% 9%;
+    --card-foreground: 40 30% 96%;
+
+    --popover: 222 42% 9%;
+    --popover-foreground: 40 30% 96%;
+
+    /* Primary = gold */
+    --primary: 42 65% 58%;
+    --primary-foreground: 222 47% 8%;
+    --primary-glow: 44 88% 70%;
+
+    --secondary: 222 35% 14%;
+    --secondary-foreground: 40 30% 96%;
+
+    --muted: 222 30% 14%;
+    --muted-foreground: 40 12% 70%;
+
+    --accent: 42 55% 50%;
+    --accent-foreground: 222 47% 8%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 40 30% 96%;
+
+    --success: 150 55% 45%;
+    --warning: 38 92% 55%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 16%;
+    --ring: 42 65% 58%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-hero: radial-gradient(ellipse at top, hsl(222 50% 14% / 0.9), hsl(222 47% 5%) 70%);
+    --gradient-gold: linear-gradient(135deg, hsl(42 70% 60%), hsl(38 85% 50%));
+    --gradient-card: linear-gradient(160deg, hsl(222 42% 11%), hsl(222 47% 7%));
+    --gradient-border: linear-gradient(135deg, hsl(42 65% 58% / 0.5), hsl(42 65% 58% / 0));
+
+    /* Shadows */
+    --shadow-gold: 0 20px 60px -20px hsl(42 65% 58% / 0.35);
+    --shadow-elegant: 0 30px 80px -30px hsl(222 80% 2% / 0.7);
+    --shadow-soft: 0 8px 30px -10px hsl(222 80% 2% / 0.5);
+
+    /* Motion */
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    --transition-base: all 0.35s var(--ease-out-soft);
+
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 40 30% 92%;
+    --sidebar-primary: 42 65% 58%;
+    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-accent: 222 35% 14%;
+    --sidebar-accent-foreground: 40 30% 96%;
+    --sidebar-border: 222 30% 16%;
+    --sidebar-ring: 42 65% 58%;
+  }
+
+  .light {
+    --background: 40 33% 98%;
+    --foreground: 222 47% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 8%;
+    --primary: 42 75% 45%;
+    --primary-foreground: 40 33% 98%;
+    --secondary: 222 25% 95%;
+    --secondary-foreground: 222 47% 8%;
+    --muted: 222 20% 94%;
+    --muted-foreground: 222 15% 40%;
+    --accent: 42 70% 50%;
+    --accent-foreground: 40 33% 98%;
+    --border: 222 20% 88%;
+    --input: 222 20% 88%;
+    --ring: 42 75% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+    background-image:
+      radial-gradient(circle at 15% 10%, hsl(42 65% 58% / 0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, hsl(222 80% 30% / 0.15), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    letter-spacing: -0.01em;
+  }
+
+  body, .font-sans {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-gradient-gold { background: var(--gradient-gold); }
+  .bg-gradient-card { background: var(--gradient-card); }
+  .bg-gradient-hero { background: var(--gradient-hero); }
+  .shadow-gold { box-shadow: var(--shadow-gold); }
+  .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .transition-base { transition: var(--transition-base); }
+
+  .gold-border {
+    position: relative;
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
+  }
+  .gold-border::before {
+    content: "";
+    position: absolute; inset: 0;
+    padding: 1px; border-radius: inherit;
+    background: var(--gradient-border);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .hairline {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.5), transparent);
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-fade-up { animation: fade-up 0.7s var(--ease-out-soft) both; }
+
+/* Anti-piracy: block printing */
+@media print {
+  body { display: none !important; }
+  html::after {
+    content: "Printing is not allowed.";
+    display: block;
+    padding: 2rem;
+    font-size: 1.5rem;
+    text-align: center;
+  }
+}
+
+/* Anti-piracy: disable text selection on reader areas */
+.anti-piracy-shell {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.anti-piracy-shell canvas {
+  pointer-events: auto;
+}
