@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,8 @@ export default function Auth({ mode }: { mode: Mode }) {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [signupSent, setSignupSent] = useState(false);
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get("ref") ?? "";
 
   const titles = {
     login: { h: "Welcome back", s: "Sign in to continue your learning." },
@@ -40,15 +42,32 @@ export default function Auth({ mode }: { mode: Mode }) {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: { full_name: fullName },
+            data: { full_name: fullName, referred_by: refCode || undefined },
           },
         });
         if (error) throw error;
+
+        // Create referral record if ref code was used
+        if (refCode && signUpData?.user?.id) {
+          const { data: codeData } = await supabase
+            .from("referral_codes")
+            .select("user_id")
+            .eq("code", refCode)
+            .eq("active", true)
+            .maybeSingle();
+          if (codeData) {
+            await supabase.from("referrals").insert({
+              referrer_id: codeData.user_id,
+              referred_id: signUpData.user.id,
+              code: refCode,
+            });
+          }
+        }
         setSignupSent(true);
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

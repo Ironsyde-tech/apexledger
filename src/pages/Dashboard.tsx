@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   BookOpen, GraduationCap, Award, Receipt,
-  BookMarked, Loader2, ArrowRight, Sparkles,
+  BookMarked, Loader2, ArrowRight, Sparkles, Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { CertificateDialog } from "@/components/Certificate";
 
 type DashCourse = {
   id: string;
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const [items, setItems] = useState<DashCourse[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [certCourse, setCertCourse] = useState<DashCourse | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -361,34 +363,56 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Action button */}
-              {c.nextLessonId ? (
-                <Button asChild variant="gold" className="w-full sm:w-auto shrink-0">
-                  <Link to={`/lesson/${c.slug}/${c.nextLessonId}`}>
-                    {isComplete ? (
-                      <>
-                        <Award className="h-4 w-4" /> Completed
-                      </>
-                    ) : c.pagesRead === 0 && c.completedLessons === 0 ? (
-                      <>
-                        <BookOpen className="h-4 w-4" /> Start reading
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-4 w-4" /> Continue
-                      </>
-                    )}
-                  </Link>
-                </Button>
-              ) : (
-                <Button disabled variant="outline" className="w-full sm:w-auto shrink-0">
-                  No content yet
-                </Button>
-              )}
+              {/* Action buttons */}
+              <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+                {c.nextLessonId ? (
+                  <Button asChild variant="gold" className="w-full sm:w-auto">
+                    <Link to={`/lesson/${c.slug}/${c.nextLessonId}`}>
+                      {isComplete ? (
+                        <><Award className="h-4 w-4" /> Completed</>
+                      ) : c.pagesRead === 0 && c.completedLessons === 0 ? (
+                        <><BookOpen className="h-4 w-4" /> Start reading</>
+                      ) : (
+                        <><ArrowRight className="h-4 w-4" /> Continue</>
+                      )}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button disabled variant="outline" className="w-full sm:w-auto">
+                    No content yet
+                  </Button>
+                )}
+                {isComplete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto text-primary border-primary/30 hover:bg-primary/5"
+                    onClick={() => setCertCourse(c)}
+                  >
+                    <Download className="h-3.5 w-3.5" /> Certificate
+                  </Button>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
+
+      {/* Certificate dialog */}
+      {certCourse && (
+        <CertificateDialog
+          open={!!certCourse}
+          onClose={() => setCertCourse(null)}
+          studentName={user?.user_metadata?.full_name ?? user?.email ?? "Student"}
+          courseTitle={certCourse.title}
+          completionDate={new Date().toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+          certificateId={`${certCourse.id.slice(0, 8)}-${user?.id?.slice(0, 8) ?? "0000"}`}
+        />
+      )}
     </section>
   );
 }

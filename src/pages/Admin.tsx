@@ -8,13 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Users, BookOpen, ShoppingBag, Check, X, ExternalLink, Pencil, UserPlus, Settings as SettingsIcon, Plus, LayoutList, ChevronLeft, ChevronRight, MessageSquare, Trash2 } from "lucide-react";
+import { DollarSign, Users, BookOpen, ShoppingBag, Check, X, ExternalLink, Pencil, UserPlus, Settings as SettingsIcon, Plus, LayoutList, ChevronLeft, ChevronRight, MessageSquare, Trash2, BarChart3 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { CourseFormDialog, type CourseFormValue } from "@/components/admin/CourseFormDialog";
 import { CourseContentDialog } from "@/components/admin/CourseContentDialog";
+import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 
 type OrderRow = {
   id: string;
@@ -362,6 +363,7 @@ export default function Admin() {
           <TabsTrigger value="orders">Orders & Payments</TabsTrigger>
           <TabsTrigger value="courses">Courses</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="support">Support</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -535,6 +537,10 @@ export default function Admin() {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <AdminAnalytics />
         </TabsContent>
 
         <TabsContent value="support" className="mt-6">

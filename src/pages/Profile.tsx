@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   User, KeyRound, Mail, Camera, Shield, LogOut, CheckCircle2,
   AlertCircle, Loader2, Eye, EyeOff, Calendar, BookOpen,
+  Gift, Copy, Share2, Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,11 @@ export default function Profile() {
   const [fullName, setFullName] = useState("");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
+
+  // Referral
+  const [referralCode, setReferralCode] = useState("");
+  const [referralCount, setReferralCount] = useState(0);
+  const [referralLoading, setReferralLoading] = useState(true);
 
   // Avatar
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,6 +81,32 @@ export default function Profile() {
     setEnrolledCount(enrollments.count ?? 0);
     setCompletedLessons(progress.count ?? 0);
     setProfileLoading(false);
+
+    // Load referral code
+    setReferralLoading(true);
+    const { data: refData } = await supabase
+      .from("referral_codes")
+      .select("code, uses")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (refData) {
+      setReferralCode(refData.code);
+      setReferralCount(refData.uses);
+    } else {
+      // Auto-generate a referral code
+      const code = user.id.replace(/-/g, "").slice(0, 8).toUpperCase();
+      const { data: newRef } = await supabase
+        .from("referral_codes")
+        .insert({ user_id: user.id, code })
+        .select("code, uses")
+        .single();
+      if (newRef) {
+        setReferralCode(newRef.code);
+        setReferralCount(newRef.uses);
+      }
+    }
+    setReferralLoading(false);
   }, [user]);
 
   useEffect(() => { loadProfile(); }, [loadProfile]);
@@ -484,6 +516,104 @@ export default function Profile() {
           )}
         </Button>
       </form>
+
+      {/* Referral Program */}
+      <div className="gold-border rounded-xl p-5 sm:p-8 space-y-5 mb-5 sm:mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Gift className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-display text-xl sm:text-2xl">Referral Program</h2>
+            <p className="text-xs text-muted-foreground">Share your link and earn rewards</p>
+          </div>
+        </div>
+
+        {referralLoading ? (
+          <div className="text-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-primary mx-auto" />
+          </div>
+        ) : (
+          <>
+            {/* Referral link */}
+            <div>
+              <Label>Your referral link</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={`${window.location.origin}/signup?ref=${referralCode}`}
+                  readOnly
+                  className="font-mono text-xs"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `${window.location.origin}/signup?ref=${referralCode}`
+                    );
+                    toast.success("Referral link copied!");
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                <Gift className="h-3 w-3" />
+                Your referrals get 10% off their first purchase
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-secondary/30 p-3 text-center">
+                <p className="font-display text-2xl text-primary">{referralCount}</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Referrals</p>
+              </div>
+              <div className="rounded-lg bg-secondary/30 p-3 text-center">
+                <p className="font-display text-2xl text-green-500">Active</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Status</p>
+              </div>
+            </div>
+
+            {/* Share buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  const url = `${window.location.origin}/signup?ref=${referralCode}`;
+                  window.open(
+                    `https://wa.me/?text=${encodeURIComponent(
+                      `Check out Apex Ledger — premium crypto & trading books! Use my link for 10% off: ${url}`
+                    )}`,
+                    "_blank"
+                  );
+                }}
+              >
+                <Share2 className="h-3.5 w-3.5" /> WhatsApp
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  const url = `${window.location.origin}/signup?ref=${referralCode}`;
+                  window.open(
+                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                      `Level up your trading game with Apex Ledger 📈 Use my link for 10% off: ${url}`
+                    )}`,
+                    "_blank"
+                  );
+                }}
+              >
+                <Share2 className="h-3.5 w-3.5" /> Twitter / X
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Danger zone */}
       <div className="rounded-xl border border-destructive/30 p-5 sm:p-8 space-y-4">

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { Copy, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Copy, Upload, AlertCircle, CheckCircle2, Gift, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +39,12 @@ export default function Checkout() {
   const [wallets, setWallets] = useState<{ TRC20: string; ERC20: string } | null>(null);
   const [walletsError, setWalletsError] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+
+  // Referral/discount
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [discountApplied, setDiscountApplied] = useState(false);
+  const [checkingCode, setCheckingCode] = useState(false);
 
   const MAX_PROOF_BYTES = 10 * 1024 * 1024;
   const ALLOWED_PROOF_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
@@ -169,6 +175,38 @@ export default function Checkout() {
     toast.success("Copied to clipboard");
   };
 
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) return;
+    setCheckingCode(true);
+    const { data } = await supabase
+      .from("referral_codes")
+      .select("discount_percent, user_id, active, uses, max_uses")
+      .eq("code", discountCode.trim().toUpperCase())
+      .maybeSingle();
+
+    if (!data || !data.active || data.uses >= data.max_uses) {
+      toast.error("Invalid or expired referral code.");
+      setDiscountPercent(0);
+      setDiscountApplied(false);
+    } else if (data.user_id === user?.id) {
+      toast.error("You can't use your own referral code.");
+      setDiscountPercent(0);
+      setDiscountApplied(false);
+    } else {
+      setDiscountPercent(data.discount_percent);
+      setDiscountApplied(true);
+      toast.success(`${data.discount_percent}% discount applied!`);
+    }
+    setCheckingCode(false);
+  };
+
+  const finalPrice = course
+    ? discountApplied
+      ? Math.max(course.price - (course.price * discountPercent) / 100, 0)
+      : course.price
+    : 0;
+  const discountAmount = course ? course.price - finalPrice : 0;
+
   const onProofChange = (file: File | null) => {
     if (!file) { setProofFile(null); return; }
     if (!ALLOWED_PROOF_TYPES.includes(file.type)) {
@@ -223,7 +261,7 @@ export default function Checkout() {
         .insert({
           user_id: user.id,
           course_id: course.id,
-          amount: course.price,
+          amount: finalPrice,
           currency: "USD",
           status: "pending",
           payment_method: method,
@@ -335,7 +373,7 @@ export default function Checkout() {
           <div className="rounded-lg bg-secondary/40 border border-border p-4 text-sm text-muted-foreground space-y-2">
             <p className="font-medium text-foreground">Payment instructions</p>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Send exactly ${course.price} USDT on the <strong>{network}</strong> network.</li>
+              <li>Send exactly ${finalPrice.toFixed(2)} USDT on the <strong>{network}</strong> network.</li>
               <li>Copy the transaction hash from your wallet.</li>
               <li>Paste it below and upload a screenshot as proof.</li>
             </ol>
@@ -360,6 +398,39 @@ export default function Checkout() {
             </label>
           </div>
 
+          {/* Referral code */}
+          <div>
+            <Label className="mb-2 block">Have a referral code?</Label>
+            <div className="flex gap-2">
+              <Input
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                placeholder="Enter code"
+                className="font-mono text-xs uppercase"
+                disabled={discountApplied}
+              />
+              <Button
+                type="button"
+                variant={discountApplied ? "outline" : "gold"}
+                size="sm"
+                className="shrink-0"
+                disabled={checkingCode || discountApplied}
+                onClick={applyDiscount}
+              >
+                {checkingCode ? "Checking…" : discountApplied ? (
+                  <><CheckCircle2 className="h-3.5 w-3.5" /> Applied</>
+                ) : (
+                  <><Tag className="h-3.5 w-3.5" /> Apply</>
+                )}
+              </Button>
+            </div>
+            {discountApplied && (
+              <p className="text-[11px] text-green-500 mt-1 flex items-center gap-1">
+                <Gift className="h-3 w-3" /> {discountPercent}% discount applied — you save ${discountAmount.toFixed(2)}
+              </p>
+            )}
+          </div>
+
           <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 flex gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
             <p className="text-muted-foreground">
@@ -380,13 +451,24 @@ export default function Checkout() {
         <h3 className="font-display text-2xl mb-2">{course.title}</h3>
         <p className="text-sm text-muted-foreground mb-6">{course.tagline}</p>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${course.price}.00</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${course.price.toFixed(2)}</span></div>
+          {discountApplied && (
+            <div className="flex justify-between text-green-500">
+              <span className="flex items-center gap-1"><Gift className="h-3.5 w-3.5" /> Referral ({discountPercent}%)</span>
+              <span>-${discountAmount.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>$0.00</span></div>
         </div>
         <div className="hairline my-6" />
         <div className="flex justify-between items-baseline">
           <span className="font-display text-lg">Total</span>
-          <span className="font-display text-3xl text-gradient-gold">${course.price}.00</span>
+          <div className="text-right">
+            {discountApplied && (
+              <span className="text-sm text-muted-foreground line-through mr-2">${course.price.toFixed(2)}</span>
+            )}
+            <span className="font-display text-3xl text-gradient-gold">${finalPrice.toFixed(2)}</span>
+          </div>
         </div>
       </aside>
     </section>
