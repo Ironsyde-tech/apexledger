@@ -66,22 +66,23 @@ export default function Catalog() {
   );
 
   return (
-    <section className="container py-20">
-      <SEO title="Courses" description="Browse our curated library of premium crypto, forex & trading books. Find your edge in the markets." />
+    <section style={{ borderBottom: "1px solid var(--surface-border)" }}>
+      <div className="container py-20 md:py-28">
+      <SEO title="Books" description="Browse our curated library of premium crypto, forex & trading books. Find your edge in the markets." />
       <div className="max-w-3xl mb-12">
-        <p className="text-xs uppercase tracking-widest text-primary mb-3">Course catalog</p>
-        <h1 className="font-display text-5xl md:text-6xl mb-4">A small library, carefully tended.</h1>
-        <p className="text-muted-foreground text-lg">Every course is the product of months of work. Choose one and begin.</p>
+        <p className="kicker mb-3">Book catalog</p>
+        <h1 className="font-display text-4xl md:text-5xl mb-4">A small library, carefully tended.</h1>
+        <p className="text-lg" style={{ color: "rgba(245,240,232,0.5)" }}>Every book is the product of months of work. Choose one and begin.</p>
       </div>
 
-      <div className="gold-border rounded-xl p-5 mb-10 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+      <div className="card-surface rounded-lg p-5 mb-10 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search courses, topics, categories… (⌘K)"
-            className="pl-10 bg-secondary/40 border-border"
+            placeholder="Search courses, topics, categories…"
+            className="pl-10"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -89,9 +90,10 @@ export default function Catalog() {
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`px-3 py-1.5 text-xs uppercase tracking-widest rounded-full transition-base border ${
+              className={`px-3 py-1.5 text-[11px] uppercase tracking-[0.1em] transition-base border rounded ${
                 cat === c ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"
               }`}
+              style={{ borderRadius: 3 }}
             >
               {c}
             </button>
@@ -102,9 +104,10 @@ export default function Catalog() {
             <button
               key={l}
               onClick={() => setLevel(l)}
-              className={`px-3 py-1.5 text-xs uppercase tracking-widest rounded-full transition-base border ${
+              className={`px-3 py-1.5 text-[11px] uppercase tracking-[0.1em] transition-base border rounded ${
                 level === l ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"
               }`}
+              style={{ borderRadius: 3 }}
             >
               {l}
             </button>
@@ -128,7 +131,8 @@ export default function Catalog() {
           action={
             <button
               onClick={() => { setQ(""); setLevel("All"); setCat("All"); }}
-              className="px-4 py-2 text-sm rounded-full border border-border hover:border-primary/50 transition-base"
+              className="px-4 py-2 text-[11px] uppercase tracking-[0.1em] border border-editorial hover:border-ink text-ink-muted hover:text-ink transition-base"
+              style={{ borderRadius: 3 }}
             >
               Clear filters
             </button>
@@ -139,6 +143,7 @@ export default function Catalog() {
           {filtered.map((c) => <CourseCard key={c.id} course={c} enrolled={enrolledIds.has(c.id)} />)}
         </div>
       )}
+      </div>
     </section>
   );
 }

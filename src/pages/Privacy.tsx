@@ -3,18 +3,19 @@ import { SEO } from "@/components/SEO";
 
 export default function Privacy() {
   return (
-    <section className="container py-20 max-w-3xl">
+    <section className="border-b border-editorial">
+      <div className="container py-16 md:py-24 max-w-3xl">
       <SEO title="Privacy Policy" description="How Apex Ledger collects, uses, and protects your personal data." />
-      <p className="text-xs uppercase tracking-widest text-primary mb-3">Legal</p>
-      <h1 className="font-display text-5xl md:text-6xl mb-10">Privacy Policy</h1>
+      <p className="kicker mb-3">Legal</p>
+      <h1 className="font-display text-4xl md:text-5xl mb-10">Privacy Policy</h1>
 
       <div className="prose prose-sm text-muted-foreground space-y-8">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">
           Last updated: May 2026
         </p>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">1. Information We Collect</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">1. Information We Collect</h2>
           <p>
             When you create an account, we collect your full name and email address. When you make
             a purchase, we also collect your USDT transaction hash and payment proof. We automatically
@@ -22,8 +23,8 @@ export default function Privacy() {
           </p>
         </div>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">2. How We Use Your Data</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">2. How We Use Your Data</h2>
           <p>We use your data to:</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>Provide and maintain your account</li>
@@ -34,8 +35,8 @@ export default function Privacy() {
           </ul>
         </div>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">3. Third-Party Services</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">3. Third-Party Services</h2>
           <p>We use the following third-party services to operate our platform:</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><strong className="text-foreground">Supabase</strong> — Authentication, database, and file storage</li>
@@ -47,8 +48,8 @@ export default function Privacy() {
           </p>
         </div>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">4. Data Security</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">4. Data Security</h2>
           <p>
             We implement industry-standard security measures including encrypted connections (HTTPS),
             row-level security on our database, and secure authentication via Supabase. Payment proof
@@ -56,8 +57,8 @@ export default function Privacy() {
           </p>
         </div>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">5. Your Rights</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">5. Your Rights</h2>
           <p>You have the right to:</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>Access your personal data</li>
@@ -71,8 +72,8 @@ export default function Privacy() {
           </p>
         </div>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">6. Data Retention</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">6. Data Retention</h2>
           <p>
             We retain your account data for as long as your account is active. If you request
             account deletion, we will remove your personal data within 30 days, except where
@@ -80,8 +81,8 @@ export default function Privacy() {
           </p>
         </div>
 
-        <div className="gold-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display text-2xl text-foreground">7. Changes to This Policy</h2>
+      <div className="border border-editorial p-6 space-y-4" style={{ borderRadius: 3 }}>
+          <h2 className="font-display text-2xl text-ink">7. Changes to This Policy</h2>
           <p>
             We may update this privacy policy from time to time. We will notify you of significant
             changes via email or a prominent notice on our platform.
@@ -95,6 +96,7 @@ export default function Privacy() {
           </Link>
           .
         </p>
+      </div>
       </div>
     </section>
   );

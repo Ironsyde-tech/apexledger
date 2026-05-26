@@ -23,7 +23,6 @@ export type CourseFormValue = {
   duration: string | null;
   image_url: string | null;
   published: boolean;
-  status: string;
 };
 
 const empty: CourseFormValue = {
@@ -37,7 +36,6 @@ const empty: CourseFormValue = {
   duration: "",
   image_url: null,
   published: false,
-  status: "active",
 };
 
 export function CourseFormDialog({
@@ -115,7 +113,6 @@ export function CourseFormDialog({
             level: value.level as any,
             duration: value.duration || null,
             published: value.published,
-            status: value.status || 'active',
           })
           .select("id")
           .single();
@@ -179,7 +176,6 @@ export function CourseFormDialog({
             duration: value.duration || null,
             image_url,
             published: value.published,
-            status: value.status || 'active',
           })
           .eq("id", value.id!);
         if (error) throw error;
@@ -329,12 +325,12 @@ export function CourseFormDialog({
 
           <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-4">
             <div>
-              <p className="font-medium text-primary">Coming Soon</p>
-              <p className="text-xs text-muted-foreground">Shows a "Coming Soon" badge instead of the enroll button.</p>
+              <p className="font-medium text-primary">Draft / Coming Soon</p>
+              <p className="text-xs text-muted-foreground">When unpublished, shows as "Coming Soon" in the catalog.</p>
             </div>
             <Switch
-              checked={value.status === 'coming_soon'}
-              onCheckedChange={(c) => setValue({ ...value, status: c ? 'coming_soon' : 'active' })}
+              checked={!value.published}
+              onCheckedChange={(c) => setValue({ ...value, published: !c })}
             />
           </div>
         </div>

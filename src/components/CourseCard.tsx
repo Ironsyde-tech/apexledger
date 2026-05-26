@@ -1,61 +1,83 @@
 import { Link } from "react-router-dom";
-import { Clock, BarChart3, Star, ArrowUpRight, Sparkles, CheckCircle2, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, Star } from "lucide-react";
 import { courseImage, type CourseListItem } from "@/lib/courses";
 
-export const CourseCard = ({ course, enrolled = false }: { course: CourseListItem; enrolled?: boolean }) => (
-  <article className="group gold-border rounded-xl overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-2 hover:shadow-glow shimmer-on-hover">
-    <Link to={`/courses/${course.slug}`} className="relative block aspect-[16/10] overflow-hidden">
-      <img
-        src={courseImage(course.image_url)}
-        alt={course.title}
-        loading="lazy"
-        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-      {course.category && (
-        <span className="absolute top-3 left-3 rounded-full glass px-3 py-1 text-[11px] uppercase tracking-widest text-primary font-medium">
-          {course.category}
-        </span>
-      )}
-      {enrolled && (
-        <span className="absolute top-3 right-3 rounded-full bg-emerald-600/90 backdrop-blur px-3 py-1 text-[11px] uppercase tracking-widest text-white font-semibold flex items-center gap-1">
-          <CheckCircle2 className="h-3 w-3" /> Enrolled
-        </span>
-      )}
-      {!enrolled && course.status === 'coming_soon' && (
-        <span className="absolute top-3 right-3 rounded-full bg-primary/90 backdrop-blur px-3 py-1 text-[11px] uppercase tracking-widest text-primary-foreground font-semibold flex items-center gap-1">
-          <Sparkles className="h-3 w-3" /> Coming Soon
-        </span>
-      )}
-    </Link>
+const catColors: Record<string, { bg: string; text: string; border: string }> = {
+  crypto: { bg: "#FEF9E7", text: "#8B6914", border: "#E8D9B0" },
+  forex: { bg: "#E8F0FE", text: "#0056D2", border: "#B8D4FE" },
+  strategy: { bg: "#E8F5E9", text: "#2E7D32", border: "#A5D6A7" },
+  psychology: { bg: "#F3E8FD", text: "#7B1FA2", border: "#CE93D8" },
+};
 
-    <div className="p-6 flex-1 flex flex-col">
-      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-        {course.duration && <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {course.duration}</span>}
-        <span className="inline-flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" /> {course.level}</span>
-        <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary fill-primary" /> {course.rating}</span>
+export const CourseCard = ({ course, enrolled = false }: { course: CourseListItem; enrolled?: boolean }) => {
+  const cat = (course.category ?? "").toLowerCase();
+  const catStyle = catColors[cat] ?? { bg: "var(--bg-alt)", text: "var(--text-muted)", border: "var(--border)" };
+  const hasImg = course.image_url && !course.image_url.includes("placeholder");
+
+  return (
+    <article className="card" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <Link to={`/courses/${course.slug}`} style={{ textDecoration: "none", display: "block" }}>
+        <div style={{ height: 160, position: "relative", overflow: "hidden", background: hasImg ? undefined : "linear-gradient(135deg, var(--bg-alt), var(--border))" }}>
+          {hasImg ? (
+            <img src={courseImage(course.image_url)} alt={course.title} loading="lazy" style={{ height: "100%", width: "100%", objectFit: "cover" }} />
+          ) : (
+            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 40, opacity: 0.3 }}>📚</span>
+            </div>
+          )}
+          {enrolled && (
+            <span style={{ position: "absolute", top: 10, right: 10, background: "var(--green)", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, color: "#fff", display: "flex", alignItems: "center", gap: 4 }}>
+              <CheckCircle2 style={{ width: 12, height: 12 }} /> Enrolled
+            </span>
+          )}
+        </div>
+      </Link>
+
+      <div style={{ padding: "14px 16px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Provider + category */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--gold)" }} />
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Apex Ledger</span>
+          </div>
+          {course.category && (
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: catStyle.bg, color: catStyle.text, border: `1px solid ${catStyle.border}` }}>
+              {course.category}
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", lineHeight: 1.3, marginBottom: 6, fontFamily: "Inter, sans-serif" }}>
+          <Link to={`/courses/${course.slug}`} style={{ color: "var(--text)", textDecoration: "none" }}>{course.title}</Link>
+        </h3>
+
+        {/* Tagline */}
+        {course.tagline && <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, marginBottom: 12, flex: 1 }}>{course.tagline}</p>}
+
+        {/* Skills tags */}
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+          {(course.level ? [course.level] : []).concat(course.duration ? [course.duration] : []).map(t => (
+            <span key={t} style={{ fontSize: 10, color: "var(--text-muted)", background: "var(--bg-alt)", border: "1px solid var(--border)", borderRadius: 4, padding: "2px 6px" }}>{t}</span>
+          ))}
+        </div>
+
+        {/* Rating + price footer */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, borderTop: "1px solid var(--border)", marginTop: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Star style={{ width: 14, height: 14, color: "var(--gold)", fill: "var(--gold)" }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{course.rating || "4.8"}</span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>({course.students_count || 0})</span>
+          </div>
+          {enrolled ? (
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--green)", display: "flex", alignItems: "center", gap: 4 }}><CheckCircle2 style={{ width: 14, height: 14 }} /> Enrolled</span>
+          ) : !course.published ? (
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--gold-dark)" }}>Coming Soon</span>
+          ) : (
+            <span className="font-mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{course.price} <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 400 }}>USDT</span></span>
+          )}
+        </div>
       </div>
-
-      <h3 className="font-display text-2xl mb-2 leading-tight group-hover:text-primary transition-colors">{course.title}</h3>
-      {course.tagline && <p className="text-sm text-muted-foreground mb-6 flex-1 leading-relaxed">{course.tagline}</p>}
-
-      <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/40">
-        {enrolled ? (
-          <span className="text-sm text-emerald-500 font-medium flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> Enrolled
-          </span>
-        ) : course.status === 'coming_soon' ? (
-          <span className="text-sm text-primary font-medium">Coming Soon</span>
-        ) : (
-          <span className="font-display text-2xl text-gradient-gold">${course.price}</span>
-        )}
-        <Button asChild variant={enrolled ? "gold" : "outline"} size="sm" className="group/btn">
-          <Link to={enrolled ? `/lesson/${course.slug}/preview` : `/courses/${course.slug}`}>
-            {enrolled ? <><BookOpen className="h-3.5 w-3.5" /> Continue</> : course.status === 'coming_soon' ? 'Learn more' : 'View course'} {!enrolled && <ArrowUpRight className="transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />}
-          </Link>
-        </Button>
-      </div>
-    </div>
-  </article>
-);
+    </article>
+  );
+};

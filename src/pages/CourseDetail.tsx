@@ -105,7 +105,7 @@ export default function CourseDetail() {
     );
   }
   if (!course) return <Navigate to="/courses" replace />;
-  if (course.status === 'archived') return <Navigate to="/courses" replace />;
+  if (!course.published) return <Navigate to="/courses" replace />;
 
   return (
     <article>
@@ -139,7 +139,7 @@ export default function CourseDetail() {
           <aside className="gold-border rounded-xl overflow-hidden self-start sticky top-24">
             <img src={courseImage(course.image_url)} alt={course.title} className="aspect-[16/10] w-full object-cover" />
             <div className="p-7">
-              {course.status === 'coming_soon' ? (
+              {!course.published ? (
                 <>
                   <Badge className="bg-primary/15 text-primary border-primary/30 mb-4 text-sm">✨ Coming Soon</Badge>
                   <p className="text-muted-foreground text-sm mb-4">This course is not yet available for enrollment. Stay tuned!</p>
@@ -339,7 +339,7 @@ export default function CourseDetail() {
       )}
 
       {/* CTA */}
-      {course.status !== 'coming_soon' && enrollmentStatus !== 'enrolled' && enrollmentStatus !== 'pending' && (
+      {course.published && enrollmentStatus !== 'enrolled' && enrollmentStatus !== 'pending' && (
       <section className="container py-24">
         <div className="gold-border rounded-2xl p-10 md:p-16 text-center bg-gradient-to-br from-secondary/40 to-transparent">
           <p className="text-xs uppercase tracking-widest text-primary mb-4">Begin your journey</p>

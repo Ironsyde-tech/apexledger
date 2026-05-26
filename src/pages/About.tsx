@@ -1,107 +1,92 @@
-import { Anchor, Compass, Feather, Users, BookOpen, Award, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { useReveal, useCounter } from "@/hooks/useReveal";
+import { BookOpen, Users, Globe, Award, Shield, Target, Sparkles } from "lucide-react";
 
-const values = [
-  { icon: Anchor, title: "Grounded", text: "We teach what works in practice — not what trends on social media." },
-  { icon: Compass, title: "Considered", text: "Every lesson is shaped by mentors with real, lived experience." },
-  { icon: Feather, title: "Crafted", text: "Clean writing, beautiful design, honest pacing. No filler." },
-];
-
-function Stat({ value, label, suffix = "" }: { value: number; label: string; suffix?: string }) {
+function StatCard({ icon: Icon, value, label, suffix = "" }: { icon: any; value: number; label: string; suffix?: string }) {
   const { ref, isVisible } = useReveal<HTMLDivElement>();
   const count = useCounter(value, 2000, isVisible);
   return (
-    <div ref={ref} className="reveal text-center">
-      <p className="font-display text-4xl md:text-5xl text-gradient-gold tabular-nums">{count}{suffix}</p>
-      <p className="text-sm text-muted-foreground mt-2 uppercase tracking-widest">{label}</p>
+    <div ref={ref} className="reveal" style={{ textAlign: "center", padding: 24 }}>
+      <Icon style={{ width: 28, height: 28, color: "var(--gold)", margin: "0 auto 12px" }} />
+      <p style={{ fontSize: 32, fontWeight: 700, color: "var(--text)", fontFamily: "Inter, sans-serif" }}>{count}{suffix}</p>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{label}</p>
     </div>
   );
 }
 
 export default function About() {
-  const missionReveal = useReveal<HTMLDivElement>();
-  const valuesReveal = useReveal<HTMLDivElement>();
-  const storyReveal = useReveal<HTMLDivElement>();
-
   return (
     <>
-      <SEO title="About" description="Apex Ledger was built on a simple idea: learning to navigate markets should feel less like gambling and more like a craft." />
+      <SEO title="About" description="Apex Ledger — a premium knowledge hub for ambitious traders." />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 hero-grid" />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(42_65%_58%/0.06)_0%,transparent_60%)]" />
-        <div className="container py-24 md:py-32 max-w-4xl">
-          <p className="text-xs uppercase tracking-widest text-primary mb-4 animate-fade-up">Our philosophy</p>
-          <h1 className="font-display text-5xl md:text-7xl mb-8 leading-tight animate-fade-up" style={{ animationDelay: "0.1s" }}>
-            A quiet academy <br />for a noisy world.
-          </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            Apex Ledger was built on a simple idea: that learning to navigate markets should feel less like gambling and more like a craft. We write books with the patience of editors and the rigour of practitioners — so that what you learn here stays with you.
+      <section style={{ background: "var(--navy)", color: "#fff", padding: "64px 0" }}>
+        <div className="container" style={{ maxWidth: 800 }}>
+          <span className="kicker animate-fade-up" style={{ color: "var(--gold)", marginBottom: 16, display: "block" }}>About Apex Ledger</span>
+          <h1 className="animate-fade-up" style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 500, lineHeight: 1.15, marginBottom: 16, color: "#fff", animationDelay: "0.1s" }}>A quiet academy for a noisy world.</h1>
+          <p className="animate-fade-up" style={{ fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, maxWidth: 600, animationDelay: "0.2s" }}>
+            Apex Ledger was built on a simple idea: that learning to navigate markets should feel less like gambling and more like a craft.
           </p>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="container py-16">
-        <div className="gold-border rounded-2xl p-10 md:p-14 glow-gold">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <Stat value={50} label="Students" suffix="+" />
-            <Stat value={5} label="Courses" suffix="+" />
-            <Stat value={12} label="Countries" suffix="+" />
-            <Stat value={98} label="Satisfaction" suffix="%" />
-          </div>
+      <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--border)" }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
+          <StatCard icon={BookOpen} value={15} label="Expert courses" suffix="+" />
+          <StatCard icon={Users} value={500} label="Active students" suffix="+" />
+          <StatCard icon={Globe} value={12} label="Countries" suffix="+" />
+          <StatCard icon={Award} value={98} label="Satisfaction" suffix="%" />
         </div>
       </section>
 
       {/* Values */}
-      <section className="container py-24">
-        <div ref={valuesReveal.ref} className="reveal text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs uppercase tracking-widest text-primary mb-3">Our values</p>
-          <h2 className="font-display text-4xl md:text-5xl">What we stand for.</h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {values.map((v, i) => (
-            <div key={v.title} className="gold-border rounded-xl p-8 shimmer-on-hover reveal" style={{ transitionDelay: `${i * 0.15}s` }}>
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
-                <v.icon className="h-6 w-6 text-primary" />
+      <section className="section" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <span className="kicker" style={{ marginBottom: 8, display: "block" }}>Our values</span>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 28, fontWeight: 700, color: "var(--text)" }}>What we stand for</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+            {[
+              { icon: Shield, title: "Grounded", text: "We teach what works in practice — not what trends on social media." },
+              { icon: Target, title: "Considered", text: "Every lesson is shaped by mentors with real, lived experience." },
+              { icon: Sparkles, title: "Crafted", text: "Clean writing, beautiful design, honest pacing. No filler." },
+            ].map(v => (
+              <div key={v.title} className="card-flat" style={{ padding: 28, textAlign: "center" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 12, background: "var(--gold-bg)", border: "1px solid var(--gold-border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <v.icon style={{ width: 24, height: 24, color: "var(--gold-dark)" }} />
+                </div>
+                <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>{v.title}</h3>
+                <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6 }}>{v.text}</p>
               </div>
-              <h3 className="font-display text-2xl mb-3">{v.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{v.text}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Mission */}
-      <section className="container py-24">
-        <div ref={missionReveal.ref} className="reveal gold-border rounded-2xl p-12 md:p-20 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(42_65%_58%/0.06)_0%,transparent_70%)]" />
-          <div className="relative">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-8 mx-auto">
-              <Globe className="h-8 w-8 text-primary" />
-            </div>
-            <h2 className="font-display text-4xl md:text-5xl mb-6">Our mission</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              To make world-class market education accessible, honest, and beautifully presented — so that anyone with ambition can develop real trading skill, regardless of where they start.
-            </p>
-          </div>
+      <section className="section" style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--border)", textAlign: "center" }}>
+        <div className="container" style={{ maxWidth: 680 }}>
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Our mission</h2>
+          <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7 }}>
+            To make world-class market education accessible, honest, and beautifully presented — so that anyone with ambition can develop real trading skill, regardless of where they start.
+          </p>
         </div>
       </section>
 
       {/* Story */}
-      <section className="container py-24 max-w-3xl">
-        <div ref={storyReveal.ref} className="reveal">
-          <p className="text-xs uppercase tracking-widest text-primary mb-3">Our story</p>
-          <h2 className="font-display text-4xl md:text-5xl mb-8">How it began.</h2>
-          <div className="space-y-5 text-muted-foreground leading-relaxed text-lg">
-            <p>Apex Ledger began as a small reading group between practitioners and friends. What started as evening discussions over markets, books, and strategy eventually became a library — and then a platform.</p>
-            <p>We chose the name Apex Ledger for what it represents: reaching the peak through clear, recorded knowledge. The markets reward those who think clearly. We're here to help you do exactly that.</p>
-          </div>
-          <Button asChild variant="gold" size="lg" className="mt-10 glow-gold"><Link to="/courses">See our courses</Link></Button>
+      <section className="section" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="container" style={{ maxWidth: 700 }}>
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 24, fontWeight: 700, color: "var(--text)", marginBottom: 20 }}>How it began</h2>
+          <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 16 }}>
+            Apex Ledger began as a small reading group between practitioners and friends. What started as evening discussions over markets, books, and strategy eventually became a library — and then a platform.
+          </p>
+          <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 32 }}>
+            We chose the name Apex Ledger for what it represents: reaching the peak through clear, recorded knowledge. The markets reward those who think clearly. We're here to help you do exactly that.
+          </p>
+          <Link to="/courses" className="btn-primary" style={{ borderRadius: 8 }}>Explore courses</Link>
         </div>
       </section>
     </>

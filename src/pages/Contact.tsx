@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, MessageCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { isRateLimited } from "@/lib/rateLimiter";
 import { SEO } from "@/components/SEO";
+import { Mail, MessageCircle, Clock } from "lucide-react";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -25,69 +24,63 @@ export default function Contact() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const parsed = schema.safeParse(Object.fromEntries(fd));
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs");
-      return;
-    }
-
-    if (isRateLimited("contact-form", 3, 5 * 60 * 1000)) {
-      toast.error("Too many messages. Please wait a few minutes before trying again.");
-      return;
-    }
-
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs"); return; }
+    if (isRateLimited("contact", 60_000)) { toast.error("Please wait a moment before sending another message."); return; }
     setLoading(true);
-    const { error } = await supabase.from("support_messages").insert({
-      name: parsed.data.name,
-      email: parsed.data.email,
-      message: parsed.data.message,
-      user_id: user?.id ?? null,
-    });
+    try {
+      const { error: err } = await supabase.from("contact_messages").insert({ name: parsed.data.name, email: parsed.data.email, message: parsed.data.message, user_id: user?.id ?? null });
+      if (err) throw err;
+    } catch { toast.error("Something went wrong. Please try again."); setLoading(false); return; }
     setLoading(false);
-
-    if (error) {
-      toast.error("Failed to send message. Please try again.");
-      return;
-    }
-
     toast.success("Message sent — we'll be in touch within one business day.");
     e.currentTarget.reset();
   };
 
   return (
-    <section className="container py-20 grid lg:grid-cols-[1fr_1.2fr] gap-12">
-      <SEO title="Contact" description="Have a question about Apex Ledger? Contact our support team — we read every message." />
-      <div>
-        <p className="text-xs uppercase tracking-widest text-primary mb-3">Support</p>
-        <h1 className="font-display text-5xl md:text-6xl mb-6">We're here when you need us.</h1>
-        <p className="text-muted-foreground text-lg mb-10">Whether it's a question about a course, a payment issue, or something else entirely — we read every message.</p>
+    <>
+      <SEO title="Contact" description="Have a question about Apex Ledger? We read every message." />
 
-        <ul className="space-y-5">
-          {[
-            { icon: Mail, label: "Email", value: "support@primesociety.com" },
-            { icon: MessageCircle, label: "Live chat", value: "Mon–Fri · 9am – 6pm UTC" },
-            { icon: Clock, label: "Response time", value: "Within 1 business day" },
-          ].map((c) => (
-            <li key={c.label} className="flex items-center gap-4">
-              <span className="h-11 w-11 rounded-full bg-gradient-gold flex items-center justify-center text-primary-foreground"><c.icon className="h-5 w-5" /></span>
-              <div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">{c.label}</p>
-                <p className="font-medium">{c.value}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <form onSubmit={submit} className="gold-border rounded-xl p-8 space-y-5">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div><Label>Name</Label><Input name="name" required maxLength={100} /></div>
-          <div><Label>Email</Label><Input name="email" type="email" required maxLength={255} /></div>
+      <section style={{ background: "var(--navy)", color: "#fff", padding: "48px 0" }}>
+        <div className="container">
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 500, color: "#fff", marginBottom: 8 }}>Contact us</h1>
+          <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)" }}>Have a question? We read every message and respond within one business day.</p>
         </div>
-        <div><Label>How can we help?</Label><Textarea name="message" rows={7} required minLength={10} maxLength={2000} placeholder="Tell us a bit about what you need…" /></div>
-        <Button variant="gold" size="lg" type="submit" className="w-full" disabled={loading}>
-          {loading ? "Sending…" : "Send message"}
-        </Button>
-      </form>
-    </section>
+      </section>
+
+      <section className="section">
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 48 }}>
+          <div>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Get in touch</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                { icon: Mail, label: "Email", value: "support@apexledger.com" },
+                { icon: MessageCircle, label: "Live chat", value: "Mon–Fri · 9am – 6pm UTC" },
+                { icon: Clock, label: "Response time", value: "Within 1 business day" },
+              ].map(c => (
+                <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--gold-bg)", border: "1px solid var(--gold-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <c.icon style={{ width: 20, height: 20, color: "var(--gold-dark)" }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>{c.label}</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{c.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={submit} className="card-flat" style={{ padding: 28 }}>
+            <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Send us a message</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+              <div><Label>Name</Label><Input name="name" required maxLength={100} /></div>
+              <div><Label>Email</Label><Input name="email" type="email" required maxLength={255} /></div>
+            </div>
+            <div style={{ marginBottom: 20 }}><Label>How can we help?</Label><Textarea name="message" rows={5} required minLength={10} maxLength={2000} placeholder="Tell us what you need…" /></div>
+            <button type="submit" className="btn-primary" style={{ width: "100%", borderRadius: 8 }} disabled={loading}>{loading ? "Sending…" : "Send message"}</button>
+          </form>
+        </div>
+      </section>
+    </>
   );
 }

@@ -15,7 +15,7 @@ export type CourseListItem = {
   category: string | null;
   rating: number;
   students_count: number;
-  status: string;
+  published: boolean;
 };
 
 export type CourseLesson = { id: string; title: string; duration: string | null; position: number };
@@ -39,7 +39,7 @@ export type CourseFull = CourseListItem & {
 };
 
 const LIST_COLUMNS =
-  "id, slug, title, tagline, description, image_url, price, duration, level, category, rating, students_count, status";
+  "id, slug, title, tagline, description, image_url, price, duration, level, category, rating, students_count, published";
 
 export const PLACEHOLDER_COURSE_IMAGE = "/placeholder.svg";
 
@@ -62,7 +62,7 @@ const normalizeList = (rows: any[]): CourseListItem[] =>
     category: r.category,
     rating: Number(r.rating ?? 0),
     students_count: r.students_count ?? 0,
-    status: r.status ?? 'active',
+    published: r.published ?? true,
   }));
 
 export async function fetchCourses(): Promise<CourseListItem[]> {
@@ -70,7 +70,6 @@ export async function fetchCourses(): Promise<CourseListItem[]> {
     .from("courses")
     .select(LIST_COLUMNS)
     .eq("published", true)
-    .neq("status", "archived")
     .order("created_at", { ascending: true });
   if (error) throw error;
   return normalizeList(data ?? []);
@@ -80,7 +79,7 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseFull | null
   const { data, error } = await supabase
     .from("courses")
     .select(
-      `id, slug, title, tagline, description, image_url, price, duration, level, category, rating, students_count, status,
+      `id, slug, title, tagline, description, image_url, price, duration, level, category, rating, students_count, published,
        hero_subtitle, format, instructor_name, instructor_title, instructor_bio, instructor_note,
        learn, who_for, requirements, resources, reviews, faq, disclaimer,
        modules ( id, title, position, lessons ( id, title, duration, position ) )`
@@ -114,7 +113,7 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseFull | null
     category: data.category,
     rating: Number(data.rating ?? 0),
     students_count: data.students_count ?? 0,
-    status: (data as any).status ?? 'active',
+    published: (data as any).published ?? true,
     hero_subtitle: data.hero_subtitle,
     format: data.format,
     instructor_name: data.instructor_name,

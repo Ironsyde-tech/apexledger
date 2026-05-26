@@ -47,7 +47,6 @@ type CourseRow = {
   image_url: string | null;
   students_count: number | null;
   published: boolean;
-  status: string;
 };
 
 type StudentRow = {
@@ -107,7 +106,7 @@ export default function Admin() {
   const [erc20, setErc20] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
 
-  // Categories
+  // Categories (derived from course.category strings, no separate table)
   const [catList, setCatList] = useState<{ id: string; name: string; slug: string; active: boolean; position: number }[]>([]);
   const [newCatName, setNewCatName] = useState("");
   const [editCatId, setEditCatId] = useState<string | null>(null);
@@ -181,7 +180,7 @@ export default function Admin() {
   const loadCourses = async () => {
     const { data, error } = await supabase
       .from("courses")
-      .select("id, slug, title, tagline, description, category, price, duration, level, image_url, students_count, published, status")
+      .select("id, slug, title, tagline, description, category, price, duration, level, image_url, students_count, published")
       .order("created_at", { ascending: false });
     if (error) return toast.error(error.message);
     setCourses((data ?? []) as CourseRow[]);
@@ -236,7 +235,7 @@ export default function Admin() {
   };
 
   const archiveCourse = async (c: CourseRow) => {
-    const { error } = await supabase.from("courses").update({ status: 'archived', published: false }).eq("id", c.id);
+    const { error } = await supabase.from("courses").update({ published: false }).eq("id", c.id);
     if (error) return toast.error(error.message);
     toast.success(`"${c.title}" archived`);
     setDeletingCourse(null);
@@ -244,45 +243,50 @@ export default function Admin() {
   };
 
   const restoreCourse = async (c: CourseRow) => {
-    const { error } = await supabase.from("courses").update({ status: 'active' }).eq("id", c.id);
+    const { error } = await supabase.from("courses").update({ published: true }).eq("id", c.id);
     if (error) return toast.error(error.message);
     toast.success(`"${c.title}" restored`);
     loadCourses();
   };
 
-  // Categories CRUD
+  // Categories — derived from course.category strings (no separate table)
   const loadCategories = async () => {
-    const { data } = await supabase.from('categories').select('id, name, slug, active, position').order('position');
-    setCatList(data ?? []);
+    // Extract unique categories from courses
+    const cats = Array.from(new Set(courses.filter(c => c.category).map(c => c.category!)));
+    setCatList(cats.map((name, i) => ({
+      id: `cat-${i}`,
+      name,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      active: true,
+      position: i,
+    })));
   };
 
   const addCategory = async () => {
     const name = newCatName.trim();
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const { error } = await supabase.from('categories').insert({ name, slug, position: catList.length });
-    if (error) return toast.error(error.message);
-    toast.success(`Category "${name}" created`);
+    if (catList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      toast.error('Category already exists');
+      return;
+    }
+    setCatList(prev => [...prev, { id: `cat-${Date.now()}`, name, slug, active: true, position: prev.length }]);
+    toast.success(`Category "${name}" added`);
     setNewCatName('');
-    loadCategories();
   };
 
   const updateCategory = async (id: string) => {
     const name = editCatName.trim();
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const { error } = await supabase.from('categories').update({ name, slug }).eq('id', id);
-    if (error) return toast.error(error.message);
+    setCatList(prev => prev.map(c => c.id === id ? { ...c, name, slug } : c));
     toast.success('Category updated');
     setEditCatId(null);
-    loadCategories();
   };
 
   const toggleCategoryActive = async (id: string, active: boolean) => {
-    const { error } = await supabase.from('categories').update({ active }).eq('id', id);
-    if (error) return toast.error(error.message);
+    setCatList(prev => prev.map(c => c.id === id ? { ...c, active } : c));
     toast.success(active ? 'Category restored' : 'Category archived');
-    loadCategories();
   };
 
   // Admin role management
@@ -308,7 +312,7 @@ export default function Admin() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadOrders(0), loadCourses(), loadStudents(), loadSettings(), loadSupportMessages(), loadCategories(), loadAdminIds()]);
+      await Promise.all([loadOrders(0), loadCourses(), loadStudents(), loadSettings(), loadSupportMessages(), loadAdminIds()]);
       setLoading(false);
     })();
   }, []);
@@ -374,7 +378,6 @@ export default function Admin() {
         duration: c.duration,
         image_url: c.image_url,
         published: c.published,
-        status: c.status ?? 'active',
       },
     });
 
@@ -514,7 +517,7 @@ export default function Admin() {
                 mode: "create",
                 initial: {
                   title: "", slug: "", tagline: "", description: "", category: "",
-                  price: 0, level: "Beginner", duration: "", image_url: null, published: false, status: "active",
+                  price: 0, level: "Beginner", duration: "", image_url: null, published: false,
                 },
               })}
             >
@@ -523,7 +526,7 @@ export default function Admin() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            {courses.filter(c => c.status !== 'archived').map((c) => (
+            {courses.filter(c => c.published).map((c) => (
               <div key={c.id} className="gold-border rounded-xl p-5 flex gap-4">
                 {c.image_url ? (
                   <img src={c.image_url} alt="" className="h-24 w-32 object-cover rounded-md" />
@@ -536,7 +539,7 @@ export default function Admin() {
                     <Badge variant="outline" className={c.published ? "bg-success/15 text-success border-success/30" : "bg-muted text-muted-foreground"}>
                       {c.published ? "Published" : "Draft"}
                     </Badge>
-                    {c.status === 'coming_soon' && (
+                    {!c.published && (
                       <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">Coming Soon</Badge>
                     )}
                   </div>
@@ -559,19 +562,19 @@ export default function Admin() {
                 </div>
               </div>
             ))}
-            {!loading && courses.filter(c => c.status !== 'archived').length === 0 && (
+            {!loading && courses.filter(c => c.published).length === 0 && (
               <p className="text-muted-foreground text-sm">No active courses.</p>
             )}
           </div>
 
           {/* Archived courses */}
-          {courses.filter(c => c.status === 'archived').length > 0 && (
+          {courses.filter(c => !c.published).length > 0 && (
             <details className="mt-6">
               <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-base">
-                <Archive className="h-3.5 w-3.5 inline mr-1" /> {courses.filter(c => c.status === 'archived').length} archived course(s)
+                <Archive className="h-3.5 w-3.5 inline mr-1" /> {courses.filter(c => !c.published).length} archived course(s)
               </summary>
               <div className="grid md:grid-cols-2 gap-4 mt-4">
-                {courses.filter(c => c.status === 'archived').map((c) => (
+                {courses.filter(c => !c.published).map((c) => (
                   <div key={c.id} className="rounded-xl border border-border/50 bg-secondary/20 p-5 flex gap-4 opacity-60">
                     {c.image_url ? (
                       <img src={c.image_url} alt="" className="h-24 w-32 object-cover rounded-md grayscale" />

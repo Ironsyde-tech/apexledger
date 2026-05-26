@@ -4,23 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:opacity-90",
-        gold: "bg-gradient-gold text-primary-foreground shadow-gold hover:shadow-elegant hover:-translate-y-0.5",
-        outline: "border border-primary/40 text-primary bg-transparent hover:bg-primary/10",
-        ghost: "hover:bg-secondary text-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive: "bg-destructive text-destructive-foreground hover:opacity-90",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]",
+        gold: "bg-[var(--gold)] text-white font-semibold hover:bg-[var(--gold-dark)]",
+        outline: "border border-[var(--border-strong)] text-[var(--text)] bg-transparent hover:bg-[var(--bg-alt)]",
+        ghost: "text-[var(--text-secondary)] hover:bg-[var(--bg-alt)] hover:text-[var(--text)]",
+        secondary: "bg-[var(--bg-alt)] text-[var(--text-secondary)] hover:bg-[var(--border)]",
+        destructive: "bg-[var(--red)] text-white hover:opacity-90",
+        link: "text-[var(--blue)] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-13 rounded-md px-8 text-base",
-        xl: "h-14 rounded-md px-10 text-base tracking-wide",
+        sm: "h-9 px-3 text-xs",
+        lg: "h-12 px-8",
+        xl: "h-14 px-10",
         icon: "h-10 w-10",
       },
     },
