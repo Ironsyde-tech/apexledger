@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 
 export default function Terms() {
   return (
     <section className="container py-20 max-w-3xl">
+      <SEO title="Terms of Service" description="Terms and conditions for using Apex Ledger's educational platform." />
       <p className="text-xs uppercase tracking-widest text-primary mb-3">Legal</p>
       <h1 className="font-display text-5xl md:text-6xl mb-10">Terms of Service</h1>
 

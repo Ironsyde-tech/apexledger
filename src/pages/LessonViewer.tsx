@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, PlayCircle, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import { Check, PlayCircle, ChevronLeft, ChevronRight, BookOpen, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AntiPiracy } from "@/components/reader/AntiPiracy";
 import { BookReader } from "@/components/reader/BookReader";
 import { EpubReader } from "@/components/reader/EpubReader";
+import { CertificateDialog } from "@/components/Certificate";
 
 type Lesson = {
   id: string;
@@ -35,6 +36,7 @@ export default function LessonViewer() {
   const [resumePage, setResumePage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [showCert, setShowCert] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Document state
@@ -183,22 +185,13 @@ export default function LessonViewer() {
 
   const index = useMemo(() => lessons.findIndex((l) => l.id === lessonId), [lessons, lessonId]);
 
-  if (accessDenied) return <Navigate to={`/courses/${slug}`} replace />;
-  if (loading) {
-    return <section className="container py-24 text-center text-muted-foreground">Loading lesson…</section>;
-  }
-  if (!lesson) {
-    if (lessons[0]) return <Navigate to={`/lesson/${slug}/${lessons[0].id}`} replace />;
-    return <Navigate to={`/courses/${slug}`} replace />;
-  }
-
   const prev = index > 0 ? lessons[index - 1] : null;
   const next = index < lessons.length - 1 ? lessons[index + 1] : null;
 
   // Debounced page progress save
   const savePageProgress = useCallback(
     debounce(async (page: number, total: number) => {
-      if (!user || !courseId) return;
+      if (!user || !courseId || !lesson) return;
       await supabase
         .from("lesson_progress")
         .upsert(
@@ -214,7 +207,7 @@ export default function LessonViewer() {
           { onConflict: "user_id,lesson_id" }
         );
     }, 2000),
-    [user, courseId, lesson.id]
+    [user, courseId, lesson?.id]
   );
 
   const handlePageChange = (page: number, total: number) => {
@@ -224,7 +217,7 @@ export default function LessonViewer() {
   };
 
   const markComplete = async () => {
-    if (!user || !courseId) return;
+    if (!user || !courseId || !lesson) return;
     setSaving(true);
     const lastPos = videoRef.current?.currentTime ?? 0;
     const { error } = await supabase
@@ -246,12 +239,31 @@ export default function LessonViewer() {
     if (error) return toast.error(error.message);
     setCompletedIds((s) => new Set(s).add(lesson.id));
     toast.success("Lesson marked complete");
-    if (next) nav(`/lesson/${slug}/${next.id}`);
+
+    // Check if ALL lessons are now completed → show certificate
+    const newCompleted = new Set(completedIds);
+    newCompleted.add(lesson.id);
+    const allDone = lessons.every((l) => newCompleted.has(l.id));
+    if (allDone) {
+      setShowCert(true);
+    } else if (next) {
+      nav(`/lesson/${slug}/${next.id}`);
+    }
   };
 
-  const isDone = completedIds.has(lesson.id);
+  const isDone = lesson ? completedIds.has(lesson.id) : false;
+
+  if (accessDenied) return <Navigate to={`/courses/${slug}`} replace />;
+  if (loading) {
+    return <section className="container py-24 text-center text-muted-foreground">Loading lesson…</section>;
+  }
+  if (!lesson) {
+    if (lessons[0]) return <Navigate to={`/lesson/${slug}/${lessons[0].id}`} replace />;
+    return <Navigate to={`/courses/${slug}`} replace />;
+  }
 
   return (
+    <>
     <section className="container py-10 grid lg:grid-cols-[1fr_360px] gap-8">
       <div>
         <Link to="/dashboard" className="text-xs uppercase tracking-widest text-primary hover:underline">← My dashboard</Link>
@@ -333,6 +345,15 @@ export default function LessonViewer() {
           </Button>
         </div>
 
+        {/* Show certificate button when all lessons are done */}
+        {lessons.length > 0 && lessons.every((l) => completedIds.has(l.id)) && (
+          <div className="mt-4 text-center">
+            <Button variant="gold" size="lg" onClick={() => setShowCert(true)}>
+              <Award className="h-4 w-4" /> Get your certificate
+            </Button>
+          </div>
+        )}
+
         <p className="text-xs uppercase tracking-widest text-muted-foreground mt-4 text-center">
           Lesson {index + 1} of {lessons.length}
         </p>
@@ -363,6 +384,20 @@ export default function LessonViewer() {
         </ul>
       </aside>
     </section>
+
+    <CertificateDialog
+      open={showCert}
+      onClose={() => setShowCert(false)}
+      studentName={user?.user_metadata?.full_name ?? user?.email ?? "Student"}
+      courseTitle={courseTitle}
+      completionDate={new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
+      certificateId={`${courseId?.slice(0, 8) ?? "0000"}-${user?.id?.slice(0, 8) ?? "0000"}`}
+    />
+    </>
   );
 }
 

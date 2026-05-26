@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ export default function Checkout() {
   const [wallets, setWallets] = useState<{ TRC20: string; ERC20: string } | null>(null);
   const [walletsError, setWalletsError] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [alreadyEnrolled, setAlreadyEnrolled] = useState(false);
 
   // Referral/discount
   const [discountCode, setDiscountCode] = useState("");
@@ -98,7 +99,27 @@ export default function Checkout() {
       .limit(1)
       .maybeSingle()
       .then(({ data }) => setPendingOrderId(data?.id ?? null));
+
+    // Check if already enrolled
+    supabase
+      .from('enrollments')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('course_id', course.id)
+      .maybeSingle()
+      .then(({ data }) => setAlreadyEnrolled(!!data));
   }, [user, course]);
+
+  // Auto-fill referral code from signup
+  const autoAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!user || autoAppliedRef.current) return;
+    const ref = user.user_metadata?.referred_by;
+    if (ref && !discountApplied && !discountCode) {
+      setDiscountCode(ref);
+      autoAppliedRef.current = true;
+    }
+  }, [user]);
 
   const loadWallets = () => {
     setWalletsError(false);
@@ -169,6 +190,7 @@ export default function Checkout() {
     );
   }
   if (!course) return <Navigate to="/courses" replace />;
+  if (alreadyEnrolled) return <Navigate to="/dashboard" replace />;
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -199,6 +221,13 @@ export default function Checkout() {
     }
     setCheckingCode(false);
   };
+
+  // Auto-apply referral code from signup metadata
+  useEffect(() => {
+    if (autoAppliedRef.current && discountCode && !discountApplied && !checkingCode) {
+      applyDiscount();
+    }
+  }, [discountCode]);
 
   const finalPrice = course
     ? discountApplied
@@ -288,6 +317,24 @@ export default function Checkout() {
         throw payErr;
       }
 
+      // 4) Create referral record if discount was applied
+      if (discountApplied && discountCode) {
+        const { data: refCodeData } = await supabase
+          .from('referral_codes')
+          .select('user_id')
+          .eq('code', discountCode.trim().toUpperCase())
+          .maybeSingle();
+        if (refCodeData) {
+          await supabase.from('referrals').insert({
+            referrer_id: refCodeData.user_id,
+            referred_id: user.id,
+            code: discountCode.trim().toUpperCase(),
+            order_id: order.id,
+            discount_applied: discountAmount,
+          });
+        }
+      }
+
       setSubmittedOrderId(order.id);
     } catch (err: any) {
       toast.error(err.message ?? "Submission failed");
@@ -363,7 +410,7 @@ export default function Checkout() {
           </div>
 
           <div>
-            <Label className="mb-2 block">Send exactly ${course.price} USDT to:</Label>
+            <Label className="mb-2 block">Send exactly ${finalPrice.toFixed(2)} USDT to:</Label>
             <div className="flex gap-2">
               <Input readOnly value={wallets[network]} className="font-mono text-xs" />
               <Button type="button" variant="outline" size="icon" onClick={() => copy(wallets[network])}><Copy /></Button>

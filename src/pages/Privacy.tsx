@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 
 export default function Privacy() {
   return (
     <section className="container py-20 max-w-3xl">
+      <SEO title="Privacy Policy" description="How Apex Ledger collects, uses, and protects your personal data." />
       <p className="text-xs uppercase tracking-widest text-primary mb-3">Legal</p>
       <h1 className="font-display text-5xl md:text-6xl mb-10">Privacy Policy</h1>
 

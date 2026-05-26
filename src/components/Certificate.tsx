@@ -1,7 +1,9 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Award } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, Award, ArrowRight, User, Pencil } from "lucide-react";
 
 type CertificateProps = {
   open: boolean;
@@ -21,6 +23,16 @@ export function CertificateDialog({
   certificateId,
 }: CertificateProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [step, setStep] = useState<'confirm' | 'certificate'>('confirm');
+  const [displayName, setDisplayName] = useState(studentName);
+
+  // Reset step when dialog opens
+  useEffect(() => {
+    if (open) {
+      setStep('confirm');
+      setDisplayName(studentName);
+    }
+  }, [open, studentName]);
 
   const drawCertificate = useCallback(
     (canvas: HTMLCanvasElement) => {
@@ -97,13 +109,13 @@ export function CertificateDialog({
       ctx.font = "300 16px 'Inter', sans-serif";
       ctx.fillText("This certifies that", W / 2, 210);
 
-      // Student name
+      // Student name — use displayName
       ctx.fillStyle = "#fafaf9";
       ctx.font = "italic 600 48px 'Cormorant Garamond', Georgia, serif";
-      ctx.fillText(studentName, W / 2, 280);
+      ctx.fillText(displayName, W / 2, 280);
 
       // Line under name
-      const nameWidth = Math.min(ctx.measureText(studentName).width + 60, 600);
+      const nameWidth = Math.min(ctx.measureText(displayName).width + 60, 600);
       const lineGrad = ctx.createLinearGradient(W / 2 - nameWidth / 2, 0, W / 2 + nameWidth / 2, 0);
       lineGrad.addColorStop(0, "rgba(201, 168, 76, 0)");
       lineGrad.addColorStop(0.2, "rgba(201, 168, 76, 0.4)");
@@ -204,7 +216,7 @@ export function CertificateDialog({
       ctx.lineTo(W - pad - 60, H - pad - 50);
       ctx.stroke();
     },
-    [studentName, courseTitle, completionDate, certificateId]
+    [displayName, courseTitle, completionDate, certificateId]
   );
 
   const handleDownload = () => {
@@ -226,32 +238,96 @@ export function CertificateDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" /> Course Certificate
-          </DialogTitle>
-        </DialogHeader>
+        {step === 'confirm' ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" /> Confirm your details
+              </DialogTitle>
+            </DialogHeader>
 
-        <div className="rounded-lg overflow-hidden border border-border bg-black">
-          <canvas
-            ref={(el) => {
-              if (el) {
-                (canvasRef as any).current = el;
-                drawCertificate(el);
-              }
-            }}
-            className="w-full h-auto"
-          />
-        </div>
+            <div className="space-y-6 py-4">
+              <div className="gold-border rounded-xl p-6 text-center bg-gradient-to-br from-primary/5 to-transparent">
+                <Award className="h-12 w-12 text-primary mx-auto mb-3" />
+                <h3 className="font-display text-2xl mb-1">Congratulations! 🎉</h3>
+                <p className="text-muted-foreground text-sm">
+                  You've completed <span className="text-foreground font-medium">{courseTitle}</span>
+                </p>
+              </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-          <Button variant="gold" onClick={handleDownload}>
-            <Download className="h-4 w-4" /> Download Certificate
-          </Button>
-        </DialogFooter>
+              <div className="space-y-4">
+                <div>
+                  <Label className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-primary" /> Full name (as it will appear on your certificate)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="text-lg pr-10"
+                    />
+                    <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5">
+                    Please make sure this is exactly how you want it on your certificate. This cannot be changed after download.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Course</p>
+                    <p className="text-sm font-medium truncate">{courseTitle}</p>
+                  </div>
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Completion date</p>
+                    <p className="text-sm font-medium">{completionDate}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={onClose}>Cancel</Button>
+              <Button
+                variant="gold"
+                onClick={() => setStep('certificate')}
+                disabled={!displayName.trim()}
+              >
+                Generate Certificate <ArrowRight className="h-4 w-4" />
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" /> Your Certificate
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="rounded-lg overflow-hidden border border-border bg-black">
+              <canvas
+                ref={(el) => {
+                  if (el) {
+                    (canvasRef as any).current = el;
+                    drawCertificate(el);
+                  }
+                }}
+                className="w-full h-auto"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setStep('confirm')}>
+                <Pencil className="h-4 w-4" /> Edit name
+              </Button>
+              <Button variant="gold" onClick={handleDownload}>
+                <Download className="h-4 w-4" /> Download Certificate
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

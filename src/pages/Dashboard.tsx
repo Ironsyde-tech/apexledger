@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { CertificateDialog } from "@/components/Certificate";
+import { SEO } from "@/components/SEO";
 
 type DashCourse = {
   id: string;
@@ -27,6 +28,7 @@ type DashCourse = {
   currentPage: number;
   currentLessonTitle: string | null;
   hasDocuments: boolean;
+  lastCompletedAt: string | null;
 };
 
 type OrderRow = {
@@ -102,12 +104,20 @@ export default function Dashboard() {
       // Build completion + page tracking maps
       const completedByCourse = new Map<string, Set<string>>();
       const pagesByCourse = new Map<string, { pagesRead: number; currentPage: number; currentLessonId: string | null }>();
+      const lastCompletedAtByCourse = new Map<string, string>();
 
       (progress ?? []).forEach((p: any) => {
         // Completed lessons
         if (p.completed_at || p.completed) {
           if (!completedByCourse.has(p.course_id)) completedByCourse.set(p.course_id, new Set());
           completedByCourse.get(p.course_id)!.add(p.lesson_id);
+          // Track the latest completion date
+          if (p.completed_at) {
+            const existing = lastCompletedAtByCourse.get(p.course_id);
+            if (!existing || p.completed_at > existing) {
+              lastCompletedAtByCourse.set(p.course_id, p.completed_at);
+            }
+          }
         }
 
         // Page tracking — accumulate pages read and track the most recent position
@@ -185,6 +195,7 @@ export default function Dashboard() {
           currentPage: pagesInfo?.currentPage ?? 0,
           currentLessonTitle,
           hasDocuments,
+          lastCompletedAt: lastCompletedAtByCourse.get(c.id) ?? null,
         };
       });
 
@@ -204,6 +215,7 @@ export default function Dashboard() {
 
   return (
     <section className="container px-4 sm:px-6 py-10 md:py-16">
+      <SEO title="Dashboard" noIndex />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 md:mb-12">
         <div>
@@ -405,12 +417,20 @@ export default function Dashboard() {
           onClose={() => setCertCourse(null)}
           studentName={user?.user_metadata?.full_name ?? user?.email ?? "Student"}
           courseTitle={certCourse.title}
-          completionDate={new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
           certificateId={`${certCourse.id.slice(0, 8)}-${user?.id?.slice(0, 8) ?? "0000"}`}
+          completionDate={
+            certCourse.lastCompletedAt
+              ? new Date(certCourse.lastCompletedAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              : new Date().toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+          }
         />
       )}
     </section>

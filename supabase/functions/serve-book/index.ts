@@ -58,21 +58,29 @@ Deno.serve(async (req: Request) => {
     // 3) Use service role client for privileged queries
     const adminClient = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // 4) Fetch the lesson + its module's course_id
+    // 4) Fetch the lesson
     const { data: lesson, error: lessonErr } = await adminClient
       .from('lessons')
-      .select('id, document_path, document_type, total_pages, module:modules!inner( course_id )')
+      .select('id, document_path, document_type, total_pages, module_id')
       .eq('id', lessonId)
       .maybeSingle();
 
     if (lessonErr || !lesson) {
+      console.error('Lesson query error:', lessonErr);
       return new Response(JSON.stringify({ error: 'Lesson not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const courseId = (lesson.module as any)?.course_id;
+    // 4b) Get course_id from the module
+    const { data: mod } = await adminClient
+      .from('modules')
+      .select('course_id')
+      .eq('id', lesson.module_id)
+      .maybeSingle();
+
+    const courseId = mod?.course_id;
     if (!courseId) {
       return new Response(JSON.stringify({ error: 'Course not found for this lesson' }), {
         status: 404,
@@ -81,12 +89,14 @@ Deno.serve(async (req: Request) => {
     }
 
     // 5) Check if user is admin (bypass enrollment check)
-    const { data: isAdmin } = await adminClient.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin',
-    });
+    const { data: roleRow } = await adminClient
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
 
-    if (!isAdmin) {
+    if (!roleRow) {
       // 6) Check enrollment
       const { data: enrollment } = await adminClient
         .from('enrollments')

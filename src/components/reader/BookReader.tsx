@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 // Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 type Props = {
   documentBlob: Blob;
@@ -22,6 +23,7 @@ export function BookReader({ documentBlob, initialPage = 1, onPageChange }: Prop
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(1.5);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pageInput, setPageInput] = useState(String(initialPage));
   const [rendering, setRendering] = useState(false);
 
@@ -31,18 +33,25 @@ export function BookReader({ documentBlob, initialPage = 1, onPageChange }: Prop
 
     (async () => {
       setLoading(true);
+      setError(null);
       try {
+        console.log("[BookReader] Blob size:", documentBlob.size, "type:", documentBlob.type);
         const arrayBuffer = await documentBlob.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        console.log("[BookReader] ArrayBuffer size:", arrayBuffer.byteLength);
+        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
         if (cancelled) return;
+        console.log("[BookReader] PDF loaded, pages:", pdf.numPages);
         pdfDocRef.current = pdf;
         setTotalPages(pdf.numPages);
         setCurrentPage(Math.min(initialPage, pdf.numPages));
         setPageInput(String(Math.min(initialPage, pdf.numPages)));
         setLoading(false);
-      } catch (err) {
-        console.error("Failed to load PDF:", err);
-        setLoading(false);
+      } catch (err: any) {
+        console.error("[BookReader] Failed to load PDF:", err);
+        if (!cancelled) {
+          setError(err.message || "Failed to parse PDF");
+          setLoading(false);
+        }
       }
     })();
 
@@ -129,6 +138,15 @@ export function BookReader({ documentBlob, initialPage = 1, onPageChange }: Prop
       <div className="flex items-center justify-center py-24">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
         <span className="ml-3 text-muted-foreground">Loading document…</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <p className="text-destructive font-medium mb-2">Failed to render PDF</p>
+        <p className="text-sm text-muted-foreground max-w-md">{error}</p>
       </div>
     );
   }

@@ -5,13 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Clock, BarChart3, Star, Users, PlayCircle, ShieldCheck, AlertCircle, Sparkles } from "lucide-react";
+import { Check, Clock, BarChart3, Star, Users, PlayCircle, ShieldCheck, AlertCircle, Sparkles, BookOpen, Loader2 } from "lucide-react";
+import { SEO } from "@/components/SEO";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CourseDetail() {
   const { slug } = useParams();
   const [course, setCourse] = useState<CourseFull | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const { user } = useAuth();
+  const [enrollmentStatus, setEnrollmentStatus] = useState<'enrolled' | 'pending' | 'none' | 'loading'>('loading');
+  const [firstLessonId, setFirstLessonId] = useState<string | null>(null);
 
   const load = () => {
     if (!slug) return;
@@ -26,6 +33,40 @@ export default function CourseDetail() {
   useEffect(() => {
     load();
   }, [slug]);
+
+  // Check enrollment status
+  useEffect(() => {
+    if (!course || !user) {
+      setEnrollmentStatus('none');
+      return;
+    }
+    (async () => {
+      // Check enrollment
+      const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', course.id)
+        .maybeSingle();
+      if (enrollment) {
+        setEnrollmentStatus('enrolled');
+        // Get first lesson
+        if (course.modules[0]?.lessons[0]) {
+          setFirstLessonId(course.modules[0].lessons[0].id);
+        }
+        return;
+      }
+      // Check pending order
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', course.id)
+        .eq('status', 'pending')
+        .maybeSingle();
+      setEnrollmentStatus(order ? 'pending' : 'none');
+    })();
+  }, [course, user]);
 
   if (loading) {
     return (
@@ -64,9 +105,17 @@ export default function CourseDetail() {
     );
   }
   if (!course) return <Navigate to="/courses" replace />;
+  if (course.status === 'archived') return <Navigate to="/courses" replace />;
 
   return (
     <article>
+      <SEO
+        title={course.title}
+        description={course.tagline ?? course.description ?? undefined}
+        image={courseImage(course.image_url)}
+        url={`${window.location.origin}/courses/${course.slug}`}
+        type="product"
+      />
       {/* Hero */}
       <section className="border-b border-border/60">
         <div className="container py-16 grid lg:grid-cols-[1.2fr_1fr] gap-12">
@@ -90,19 +139,49 @@ export default function CourseDetail() {
           <aside className="gold-border rounded-xl overflow-hidden self-start sticky top-24">
             <img src={courseImage(course.image_url)} alt={course.title} className="aspect-[16/10] w-full object-cover" />
             <div className="p-7">
-              <div className="flex items-baseline gap-3 mb-6">
-                <span className="font-display text-4xl text-gradient-gold">${course.price}</span>
-              </div>
-              <Button asChild variant="gold" size="lg" className="w-full mb-3">
-                <Link to={`/checkout/${course.slug}`}>Enroll now</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="w-full">
-                <Link to={`/lesson/${course.slug}/preview`}><PlayCircle /> Preview lesson</Link>
-              </Button>
-              <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> Full course access upon enrollment</li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> USDT (TRC20/ERC20)</li>
-              </ul>
+              {course.status === 'coming_soon' ? (
+                <>
+                  <Badge className="bg-primary/15 text-primary border-primary/30 mb-4 text-sm">✨ Coming Soon</Badge>
+                  <p className="text-muted-foreground text-sm mb-4">This course is not yet available for enrollment. Stay tuned!</p>
+                  <Button variant="outline" size="lg" className="w-full" disabled>Coming Soon</Button>
+                </>
+              ) : enrollmentStatus === 'enrolled' ? (
+                <>
+                  <Badge className="bg-success/15 text-success border-success/30 mb-4 text-sm">✓ Enrolled</Badge>
+                  <Button asChild variant="gold" size="lg" className="w-full mb-3">
+                    <Link to={firstLessonId ? `/lesson/${course.slug}/${firstLessonId}` : '/dashboard'}>
+                      <BookOpen className="h-4 w-4" /> Start reading
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link to="/dashboard">Go to dashboard</Link>
+                  </Button>
+                </>
+              ) : enrollmentStatus === 'pending' ? (
+                <>
+                  <Badge className="bg-warning/15 text-warning border-warning/30 mb-4 text-sm">⏳ Payment Pending</Badge>
+                  <p className="text-muted-foreground text-sm mb-4">Your payment is being reviewed. You'll be enrolled once confirmed.</p>
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link to="/dashboard">Go to dashboard</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-3 mb-6">
+                    <span className="font-display text-4xl text-gradient-gold">${course.price}</span>
+                  </div>
+                  <Button asChild variant="gold" size="lg" className="w-full mb-3">
+                    <Link to={`/checkout/${course.slug}`}>Enroll now</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link to={`/lesson/${course.slug}/preview`}><PlayCircle /> Preview lesson</Link>
+                  </Button>
+                  <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> Full course access upon enrollment</li>
+                    <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> USDT (TRC20/ERC20)</li>
+                  </ul>
+                </>
+              )}
             </div>
           </aside>
         </div>
@@ -260,6 +339,7 @@ export default function CourseDetail() {
       )}
 
       {/* CTA */}
+      {course.status !== 'coming_soon' && enrollmentStatus !== 'enrolled' && enrollmentStatus !== 'pending' && (
       <section className="container py-24">
         <div className="gold-border rounded-2xl p-10 md:p-16 text-center bg-gradient-to-br from-secondary/40 to-transparent">
           <p className="text-xs uppercase tracking-widest text-primary mb-4">Begin your journey</p>
@@ -270,6 +350,7 @@ export default function CourseDetail() {
           </Button>
         </div>
       </section>
+      )}
     </article>
   );
 }

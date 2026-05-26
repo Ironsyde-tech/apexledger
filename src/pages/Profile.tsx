@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { SEO } from "@/components/SEO";
 
 type ProfileData = {
   full_name: string;
@@ -243,6 +244,7 @@ export default function Profile() {
 
   return (
     <section className="container px-4 sm:px-6 py-10 md:py-16 max-w-3xl">
+      <SEO title="Profile" noIndex />
       {/* Header */}
       <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-5 sm:gap-6 mb-10 md:mb-12">
         {/* Avatar */}

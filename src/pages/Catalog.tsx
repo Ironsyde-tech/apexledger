@@ -5,17 +5,22 @@ import { EmptyState } from "@/components/EmptyState";
 import { fetchCourses, type CourseListItem } from "@/lib/courses";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const levels = ["All", "Beginner", "Intermediate", "Advanced"] as const;
-const categories = ["All", "Trading", "Crypto", "Investing", "Mentorship"];
 
 export default function Catalog() {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<(typeof levels)[number]>("All");
   const [cat, setCat] = useState("All");
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [categories, setCategories] = useState<string[]>(["All"]);
+  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
 
   const load = () => {
     setLoading(true);
@@ -28,7 +33,22 @@ export default function Catalog() {
 
   useEffect(() => {
     load();
+    supabase.from('categories').select('name').eq('active', true).order('position').then(({ data }) => {
+      setCategories(['All', ...(data ?? []).map((c: any) => c.name)]);
+    });
   }, []);
+
+  // Batch fetch enrollments
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("enrollments")
+      .select("course_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        setEnrolledIds(new Set((data ?? []).map((e: any) => e.course_id)));
+      });
+  }, [user]);
 
   const filtered = useMemo(
     () =>
@@ -47,6 +67,7 @@ export default function Catalog() {
 
   return (
     <section className="container py-20">
+      <SEO title="Courses" description="Browse our curated library of premium crypto, forex & trading books. Find your edge in the markets." />
       <div className="max-w-3xl mb-12">
         <p className="text-xs uppercase tracking-widest text-primary mb-3">Course catalog</p>
         <h1 className="font-display text-5xl md:text-6xl mb-4">A small library, carefully tended.</h1>
@@ -115,7 +136,7 @@ export default function Catalog() {
         />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((c) => <CourseCard key={c.id} course={c} />)}
+          {filtered.map((c) => <CourseCard key={c.id} course={c} enrolled={enrolledIds.has(c.id)} />)}
         </div>
       )}
     </section>

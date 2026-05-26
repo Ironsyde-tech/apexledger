@@ -9,6 +9,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { isRateLimited } from "@/lib/rateLimiter";
+import { SEO } from "@/components/SEO";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -54,6 +55,7 @@ export default function Contact() {
 
   return (
     <section className="container py-20 grid lg:grid-cols-[1fr_1.2fr] gap-12">
+      <SEO title="Contact" description="Have a question about Apex Ledger? Contact our support team — we read every message." />
       <div>
         <p className="text-xs uppercase tracking-widest text-primary mb-3">Support</p>
         <h1 className="font-display text-5xl md:text-6xl mb-6">We're here when you need us.</h1>

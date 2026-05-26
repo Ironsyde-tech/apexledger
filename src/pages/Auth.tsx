@@ -21,7 +21,7 @@ export default function Auth({ mode }: { mode: Mode }) {
   const [signupSent, setSignupSent] = useState(false);
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get("ref") ?? "";
-  const { isVerified, isEnabled, handleVerify, handleExpire } = useTurnstile();
+  const { token, isVerified, isEnabled, handleVerify, handleExpire } = useTurnstile();
 
   const titles = {
     login: { h: "Welcome back", s: "Sign in to continue your learning." },
@@ -55,6 +55,7 @@ export default function Auth({ mode }: { mode: Mode }) {
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
             data: { full_name: fullName, referred_by: refCode || undefined },
+            captchaToken: token ?? undefined,
           },
         });
         if (error) throw error;
@@ -77,13 +78,18 @@ export default function Auth({ mode }: { mode: Mode }) {
         }
         setSignupSent(true);
       } else if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+          options: { captchaToken: token ?? undefined },
+        });
         if (error) throw error;
         toast.success("Signed in.");
         nav("/dashboard");
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
+          captchaToken: token ?? undefined,
         });
         if (error) throw error;
         toast.success("If that email exists, a reset link is on its way.");

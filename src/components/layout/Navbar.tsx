@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { SearchTrigger } from "@/components/GlobalSearch";
 
+const SCROLL_THRESHOLD = 10;
+
 const links = [
   { to: "/", label: "Home" },
   { to: "/courses", label: "Courses" },
@@ -20,6 +22,9 @@ const links = [
 export const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const loc = useLocation();
   const nav = useNavigate();
@@ -30,6 +35,22 @@ export const Navbar = () => {
     setMobileOpen(false);
     setDropdownOpen(false);
   }, [loc.pathname]);
+
+  // Scroll behavior: hide on down, show on up
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+      if (y > lastScrollY.current && y > 100) {
+        setHidden(true);
+      } else if (lastScrollY.current - y > SCROLL_THRESHOLD) {
+        setHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -53,7 +74,18 @@ export const Navbar = () => {
   const avatarUrl = user?.user_metadata?.avatar_url;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+    <header
+      className={cn(
+        "sticky top-0 z-50 transition-all duration-300",
+        scrolled
+          ? "glass-strong shadow-soft border-b border-border/40"
+          : "bg-background/60 backdrop-blur-sm border-b border-border/20",
+        hidden && !mobileOpen && "-translate-y-full"
+      )}
+    >
+      {/* Gold accent line */}
+      <div className="h-[2px] w-full bg-gradient-gold opacity-80" />
+
       <div className="container flex h-18 items-center justify-between py-4">
         <Logo />
 

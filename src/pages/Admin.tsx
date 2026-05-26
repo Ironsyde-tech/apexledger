@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Users, BookOpen, ShoppingBag, Check, X, ExternalLink, Pencil, UserPlus, Settings as SettingsIcon, Plus, LayoutList, ChevronLeft, ChevronRight, MessageSquare, Trash2, BarChart3 } from "lucide-react";
+import { DollarSign, Users, BookOpen, ShoppingBag, Check, X, ExternalLink, Pencil, UserPlus, Settings as SettingsIcon, Plus, LayoutList, ChevronLeft, ChevronRight, MessageSquare, Trash2, BarChart3, Archive, RotateCcw, Shield, ShieldOff, FolderOpen } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ type CourseRow = {
   image_url: string | null;
   students_count: number | null;
   published: boolean;
+  status: string;
 };
 
 type StudentRow = {
@@ -105,6 +106,15 @@ export default function Admin() {
   const [trc20, setTrc20] = useState("");
   const [erc20, setErc20] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Categories
+  const [catList, setCatList] = useState<{ id: string; name: string; slug: string; active: boolean; position: number }[]>([]);
+  const [newCatName, setNewCatName] = useState("");
+  const [editCatId, setEditCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+
+  // Admin roles
+  const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
 
   const loadSettings = async () => {
     const { data } = await supabase
@@ -171,7 +181,7 @@ export default function Admin() {
   const loadCourses = async () => {
     const { data, error } = await supabase
       .from("courses")
-      .select("id, slug, title, tagline, description, category, price, duration, level, image_url, students_count, published")
+      .select("id, slug, title, tagline, description, category, price, duration, level, image_url, students_count, published, status")
       .order("created_at", { ascending: false });
     if (error) return toast.error(error.message);
     setCourses((data ?? []) as CourseRow[]);
@@ -225,23 +235,80 @@ export default function Admin() {
     setSupportMsgs((prev) => prev.map((m) => m.id === msg.id ? { ...m, handled: !m.handled } : m));
   };
 
-  const deleteCourse = async (c: CourseRow) => {
-    if ((c.students_count ?? 0) > 0) {
-      toast.error("Cannot delete a course with enrolled students. Unpublish it instead.");
-      setDeletingCourse(null);
-      return;
-    }
-    const { error } = await supabase.from("courses").delete().eq("id", c.id);
+  const archiveCourse = async (c: CourseRow) => {
+    const { error } = await supabase.from("courses").update({ status: 'archived', published: false }).eq("id", c.id);
     if (error) return toast.error(error.message);
-    toast.success(`"${c.title}" deleted`);
+    toast.success(`"${c.title}" archived`);
     setDeletingCourse(null);
     loadCourses();
+  };
+
+  const restoreCourse = async (c: CourseRow) => {
+    const { error } = await supabase.from("courses").update({ status: 'active' }).eq("id", c.id);
+    if (error) return toast.error(error.message);
+    toast.success(`"${c.title}" restored`);
+    loadCourses();
+  };
+
+  // Categories CRUD
+  const loadCategories = async () => {
+    const { data } = await supabase.from('categories').select('id, name, slug, active, position').order('position');
+    setCatList(data ?? []);
+  };
+
+  const addCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const { error } = await supabase.from('categories').insert({ name, slug, position: catList.length });
+    if (error) return toast.error(error.message);
+    toast.success(`Category "${name}" created`);
+    setNewCatName('');
+    loadCategories();
+  };
+
+  const updateCategory = async (id: string) => {
+    const name = editCatName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const { error } = await supabase.from('categories').update({ name, slug }).eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success('Category updated');
+    setEditCatId(null);
+    loadCategories();
+  };
+
+  const toggleCategoryActive = async (id: string, active: boolean) => {
+    const { error } = await supabase.from('categories').update({ active }).eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success(active ? 'Category restored' : 'Category archived');
+    loadCategories();
+  };
+
+  // Admin role management
+  const loadAdminIds = async () => {
+    const { data } = await supabase.from('user_roles').select('user_id').eq('role', 'admin');
+    setAdminIds(new Set((data ?? []).map((r: any) => r.user_id)));
+  };
+
+  const toggleAdmin = async (userId: string, makeAdmin: boolean) => {
+    if (makeAdmin) {
+      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: 'admin' });
+      if (error && !error.message.includes('duplicate')) return toast.error(error.message);
+      toast.success('User promoted to admin');
+    } else {
+      if (userId === user?.id) return toast.error("You can't remove your own admin role");
+      const { error } = await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', 'admin');
+      if (error) return toast.error(error.message);
+      toast.success('Admin role removed');
+    }
+    loadAdminIds();
   };
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadOrders(0), loadCourses(), loadStudents(), loadSettings(), loadSupportMessages()]);
+      await Promise.all([loadOrders(0), loadCourses(), loadStudents(), loadSettings(), loadSupportMessages(), loadCategories(), loadAdminIds()]);
       setLoading(false);
     })();
   }, []);
@@ -307,6 +374,7 @@ export default function Admin() {
         duration: c.duration,
         image_url: c.image_url,
         published: c.published,
+        status: c.status ?? 'active',
       },
     });
 
@@ -362,6 +430,7 @@ export default function Admin() {
         <TabsList className="bg-secondary/50">
           <TabsTrigger value="orders">Orders & Payments</TabsTrigger>
           <TabsTrigger value="courses">Courses</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="support">Support</TabsTrigger>
@@ -445,7 +514,7 @@ export default function Admin() {
                 mode: "create",
                 initial: {
                   title: "", slug: "", tagline: "", description: "", category: "",
-                  price: 0, level: "Beginner", duration: "", image_url: null, published: false,
+                  price: 0, level: "Beginner", duration: "", image_url: null, published: false, status: "active",
                 },
               })}
             >
@@ -454,7 +523,7 @@ export default function Admin() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            {courses.map((c) => (
+            {courses.filter(c => c.status !== 'archived').map((c) => (
               <div key={c.id} className="gold-border rounded-xl p-5 flex gap-4">
                 {c.image_url ? (
                   <img src={c.image_url} alt="" className="h-24 w-32 object-cover rounded-md" />
@@ -467,6 +536,9 @@ export default function Admin() {
                     <Badge variant="outline" className={c.published ? "bg-success/15 text-success border-success/30" : "bg-muted text-muted-foreground"}>
                       {c.published ? "Published" : "Draft"}
                     </Badge>
+                    {c.status === 'coming_soon' && (
+                      <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">Coming Soon</Badge>
+                    )}
                   </div>
                   <h3 className="font-display text-xl truncate">{c.title}</h3>
                   <p className="text-xs text-muted-foreground font-mono truncate">/{c.slug}</p>
@@ -480,16 +552,97 @@ export default function Admin() {
                     <Button size="sm" variant="outline" onClick={() => setContentCourse({ id: c.id, title: c.title })}>
                       <LayoutList className="h-3.5 w-3.5" /> Curriculum
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeletingCourse(c)}>
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    <Button size="sm" variant="ghost" className="text-warning hover:text-warning" onClick={() => setDeletingCourse(c)}>
+                      <Archive className="h-3.5 w-3.5" /> Archive
                     </Button>
                   </div>
                 </div>
               </div>
             ))}
-            {!loading && courses.length === 0 && (
-              <p className="text-muted-foreground text-sm">No courses yet.</p>
+            {!loading && courses.filter(c => c.status !== 'archived').length === 0 && (
+              <p className="text-muted-foreground text-sm">No active courses.</p>
             )}
+          </div>
+
+          {/* Archived courses */}
+          {courses.filter(c => c.status === 'archived').length > 0 && (
+            <details className="mt-6">
+              <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-base">
+                <Archive className="h-3.5 w-3.5 inline mr-1" /> {courses.filter(c => c.status === 'archived').length} archived course(s)
+              </summary>
+              <div className="grid md:grid-cols-2 gap-4 mt-4">
+                {courses.filter(c => c.status === 'archived').map((c) => (
+                  <div key={c.id} className="rounded-xl border border-border/50 bg-secondary/20 p-5 flex gap-4 opacity-60">
+                    {c.image_url ? (
+                      <img src={c.image_url} alt="" className="h-24 w-32 object-cover rounded-md grayscale" />
+                    ) : (
+                      <div className="h-24 w-32 bg-secondary rounded-md" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <Badge variant="outline" className="bg-muted text-muted-foreground mb-1">Archived</Badge>
+                      <h3 className="font-display text-xl truncate">{c.title}</h3>
+                      <div className="mt-3 flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => restoreCourse(c)}>
+                          <RotateCcw className="h-3.5 w-3.5" /> Restore
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </TabsContent>
+
+        {/* ===== Categories Tab ===== */}
+        <TabsContent value="categories" className="mt-6">
+          <div className="gold-border rounded-xl p-6 max-w-xl">
+            <h3 className="font-display text-xl mb-4">Manage Categories</h3>
+            <div className="flex gap-2 mb-6">
+              <Input
+                placeholder="New category name"
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+              />
+              <Button variant="gold" onClick={addCategory}><Plus className="h-4 w-4" /> Add</Button>
+            </div>
+            <div className="space-y-2">
+              {catList.map((c) => (
+                <div key={c.id} className={`flex items-center gap-3 rounded-lg border p-3 transition-base ${c.active ? 'border-border' : 'border-border/40 opacity-50'}`}>
+                  <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+                  {editCatId === c.id ? (
+                    <>
+                      <Input
+                        value={editCatName}
+                        onChange={(e) => setEditCatName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && updateCategory(c.id)}
+                        className="h-8 text-sm"
+                      />
+                      <Button size="sm" variant="gold" onClick={() => updateCategory(c.id)}>Save</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditCatId(null)}>Cancel</Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 text-sm font-medium">{c.name}</span>
+                      {!c.active && <Badge variant="outline" className="text-[10px]">Archived</Badge>}
+                      <Button size="sm" variant="ghost" onClick={() => { setEditCatId(c.id); setEditCatName(c.name); }}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={c.active ? 'text-warning' : 'text-success'}
+                        onClick={() => toggleCategoryActive(c.id, !c.active)}
+                      >
+                        {c.active ? <><Archive className="h-3.5 w-3.5" /> Archive</> : <><RotateCcw className="h-3.5 w-3.5" /> Restore</>}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              ))}
+              {catList.length === 0 && <p className="text-sm text-muted-foreground">No categories yet.</p>}
+            </div>
           </div>
         </TabsContent>
 
@@ -528,9 +681,27 @@ export default function Admin() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => { setEnrollStudent(s); setEnrollCourseId(""); }}>
-                        <UserPlus className="h-3.5 w-3.5" /> Enroll
-                      </Button>
+                      <div className="flex gap-1 justify-end">
+                        <Button size="sm" variant="outline" onClick={() => { setEnrollStudent(s); setEnrollCourseId(""); }}>
+                          <UserPlus className="h-3.5 w-3.5" /> Enroll
+                        </Button>
+                        {adminIds.has(s.id) ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => toggleAdmin(s.id, false)}
+                            disabled={s.id === user?.id}
+                            title={s.id === user?.id ? "Can't remove your own admin role" : "Remove admin"}
+                          >
+                            <ShieldOff className="h-3.5 w-3.5" /> Remove admin
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="ghost" className="text-primary hover:text-primary" onClick={() => toggleAdmin(s.id, true)}>
+                            <Shield className="h-3.5 w-3.5" /> Make admin
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -636,21 +807,16 @@ export default function Admin() {
       <AlertDialog open={!!deletingCourse} onOpenChange={(open) => { if (!open) setDeletingCourse(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete course</AlertDialogTitle>
+            <AlertDialogTitle>Archive course</AlertDialogTitle>
             <AlertDialogDescription>
-              {deletingCourse && (deletingCourse.students_count ?? 0) > 0
-                ? `"${deletingCourse?.title}" has ${deletingCourse?.students_count} enrolled student(s). You cannot delete it — unpublish it instead.`
-                : `Are you sure you want to permanently delete "${deletingCourse?.title}"? This action cannot be undone.`
-              }
+              Are you sure you want to archive "{deletingCourse?.title}"? It will be hidden from the catalog but can be restored later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            {deletingCourse && (deletingCourse.students_count ?? 0) === 0 && (
-              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deletingCourse && deleteCourse(deletingCourse)}>
-                Delete permanently
-              </AlertDialogAction>
-            )}
+            <AlertDialogAction className="bg-warning text-warning-foreground hover:bg-warning/90" onClick={() => deletingCourse && archiveCourse(deletingCourse)}>
+              Archive
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
